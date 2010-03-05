@@ -10,3 +10,6 @@ class PyScardImpl:
 
     def SCardReleaseContext(self, hContext):
         return SCardReleaseContext(hContext)
+
+    def SCardConnect(self, hContext, zreader, dwShared, dwProtocol):
+        return SCardConnect(hContext, zreader, dwShared, dwProtocol)

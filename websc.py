@@ -4,7 +4,11 @@ from werkzeug.debug import DebuggedApplication
 
 from smartcard.scard import *
 
-import json
+try:
+    import simplejson
+    json = simplejson
+except:
+    import json
 
 import implchooser
 import handlefactory
@@ -20,6 +24,7 @@ class WebSC(object):
             R('/', endpoint=self.welcome),
             R('/EstablishContext/<scope>', endpoint=self.establishcontext),
             R('/<handle>/ListReaders/<readergroup>', endpoint=self.listreaders),
+            R('/<handle>/Connect/<readername>/<mode>/<protocol>', endpoint=self.connect),
             R('/<handle>/Transmit/<apdu>', endpoint=self.transmit),
             R('/<handle>/ReleaseContext', endpoint=self.releasecontext),
             R('/log/<handle>', endpoint=self.log),
@@ -46,6 +51,13 @@ class WebSC(object):
         hresult, readers = impl.SCardListReaders( hContext, readergroup )
         self.logger.logoutput(__name__, handle, hresult=hresult, readers=readers)
         return werkzeug.Response(json.dumps({"hresult":hresult, "readers":readers, "HRformat": SCardGetErrorMessage(hresult)}))
+
+    def connect(self, request, handle, readername, mode, protocol):
+        handle = int(handle)
+        impl = self.handlefactory.getimplfor(handle)
+        hContext = self.handlefactory.getreal(handle)
+	hresult, hcard, dwActiveProtocol = impl.SCardConnect(hContext, str(readername), int(mode), int(protocol))
+	return werkzeug.Response(json.dumps({"hresult":hresult, "hcard":hcard, "dwActiveProtocol":dwActiveProtocol, "HRformat": SCardGetErrorMessage(hresult)})) 
 
     def transmit(self, request, handle, apdu):
         pass
