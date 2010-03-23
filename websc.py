@@ -6,16 +6,15 @@ import json
 
 from smartcard.scard import *
 
-# or should it be called WebSC ???
-class HTTPSC(object):
+class WebSC(object):
     def __init__(self):
         R = werkzeug.routing.Rule
         self.url_map = werkzeug.routing.Map([
             R('/', endpoint=self.welcome),
             R('/EstablishContext/<scope>', endpoint=self.establishcontext),
-            R('/<context>/ListReaders/<readergroup>', endpoint=self.listreaders),
-            R('/<card>/Transmit/<apdu>', endpoint=self.transmit),
-            R('/<context>/ReleaseContext', endpoint=self.release),
+            R('/<handle>/ListReaders/<readergroup>', endpoint=self.listreaders),
+            R('/<handle>/Transmit/<apdu>', endpoint=self.transmit),
+            R('/<handle>/ReleaseContext', endpoint=self.release),
             ])
 
     def welcome(self, request):
@@ -50,14 +49,14 @@ def application(env, start):
     """Detect that we are being run as WSGI application."""
 
     global application
-    httpsc = HTTPSC()
+    httpsc = WebSC()
     application = httpsc.application
     return application(env, start)
 
 def debug(config=None, wiki=None):
     """Start a standalone WSGI server."""
 
-    httpsc = HTTPSC()
+    httpsc = WebSC()
     app = DebuggedApplication(httpsc.application, evalex=True)
     
     host, port = ('0.0.0.0', 3333)
