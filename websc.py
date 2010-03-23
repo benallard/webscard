@@ -2,39 +2,66 @@ import werkzeug
 
 from werkzeug.debug import DebuggedApplication
 
+from smartcard.scard import *
+
 import json
 
-from smartcard.scard import *
+import implchooser
+import handlefactory
+import logger
 
 class WebSC(object):
     def __init__(self):
+        self.implchooser = implchooser.ImplChooser()
+        self.handlefactory = handlefactory.HandleFactory()
+        self.logger = logger.Logger()
         R = werkzeug.routing.Rule
         self.url_map = werkzeug.routing.Map([
             R('/', endpoint=self.welcome),
             R('/EstablishContext/<scope>', endpoint=self.establishcontext),
             R('/<handle>/ListReaders/<readergroup>', endpoint=self.listreaders),
             R('/<handle>/Transmit/<apdu>', endpoint=self.transmit),
-            R('/<handle>/ReleaseContext', endpoint=self.release),
+            R('/<handle>/ReleaseContext', endpoint=self.releasecontext),
+            R('/log/<handle>', endpoint=self.log),
             ])
 
     def welcome(self, request):
-        return werkzeug.Response("Welcome")
+        return werkzeug.Response("Welcome to the universal SCard Web Proxy")
 
     def establishcontext(self, request, scope):
-        hresult, hcontext = SCardEstablishContext(int(scope))
-        return werkzeug.Response(json.dumps({"hresult":hresult, "hcontext":hcontext, "HRformat": SCardGetErrorMessage(hresult)}))
+        impl = self.implchooser.chooseone()
+        dwScope = int( scope )
+        hresult, hContext = impl.SCardEstablishContext(dwScope)
+        hContext = self.handlefactory.getauniqueone(hContext, impl)
+        self.logger.loginput(__name__, hContext, dwScope=dwScope)
+        self.logger.logoutput(__name__, hContext, hresult=hresult, hContext=hContext)
+        return werkzeug.Response(json.dumps({"hresult":hresult, "hcontext":hContext, "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def listreaders(self, request, context, readergroup):
-        hresult, readers = SCardListReaders( long(context), eval(readergroup) )
-        return werkzeug.Response(json.dumps({"hresult":hresult, "hcontext":context, "readers":readers, "HRformat": SCardGetErrorMessage(hresult)}))
+    def listreaders(self, request, handle, readergroup):
+        handle = int(handle)
+        impl = self.handlefactory.getimplfor(handle)
+        readergroup = json.loads(readergroup)
+        hContext = self.handlefactory.getreal(handle)
+        self.logger.loginput(__name__, handle, readergroup=readergroup)
+        hresult, readers = impl.SCardListReaders( hContext, readergroup )
+        self.logger.logoutput(__name__, handle, hresult=hresult, readers=readers)
+        return werkzeug.Response(json.dumps({"hresult":hresult, "readers":readers, "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def transmit(self, request, context, apdu):
+    def transmit(self, request, handle, apdu):
         pass
 
-    def release(self, request, context):
-        hresult = SCardReleaseContext(long(context))
+    def releasecontext(self, request, handle):
+        handle = int(handle)
+        impl = self.handlefactory.getimplfor(handle)
+        self.logger.loginput(__name__, handle)
+        hContext = self.handlefactory.getreal(handle)
+        hresult = impl.SCardReleaseContext(hContext)
+        self.logger.logoutput(__name__, handle, hresult=hresult)
         return werkzeug.Response(json.dumps({"hresult":hresult, "HRformat": SCardGetErrorMessage(hresult)}))
         
+
+    def log(self, request, handle):
+        return werkzeug.Response(self.logger.getlogsfor(handle))
 
     @werkzeug.responder
     def application(self, environ, start):
@@ -49,15 +76,15 @@ def application(env, start):
     """Detect that we are being run as WSGI application."""
 
     global application
-    httpsc = WebSC()
-    application = httpsc.application
+    websc = WebSC()
+    application = websc.application
     return application(env, start)
 
-def debug(config=None, wiki=None):
+def debug():
     """Start a standalone WSGI server."""
 
-    httpsc = WebSC()
-    app = DebuggedApplication(httpsc.application, evalex=True)
+    websc = WebSC()
+    app = DebuggedApplication(websc.application, evalex=True)
     
     host, port = ('0.0.0.0', 3333)
 
