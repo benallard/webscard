@@ -1,13 +1,9 @@
-class Logger:
 
-    def __init__(self):
-        pass
+def loginput(function, handle, **params):
+    pass
 
-    def loginput(self, function, handle, **params):
-        pass
+def logoutput(function, handle, **params):
+    pass
 
-    def logoutput(self, function, handle, **params):
-        pass
-
-    def getlogsfor(self, handle):
-        pass
+def getlogsfor(handle):
+    pass

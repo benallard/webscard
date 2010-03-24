@@ -10,79 +10,79 @@ except:
     import json
 
 import implchooser
-import handlefactory
+from handlefactory import getauniquehandle, getimplfor, getreal
 import logger
 
 class WebSC(object):
     def __init__(self):
-        self.implchooser = implchooser.ImplChooser()
-        self.handlefactory = handlefactory.HandleFactory()
-        self.logger = logger.Logger()
         R = werkzeug.routing.Rule
         self.url_map = werkzeug.routing.Map([
-            R('/', endpoint=self.welcome),
-            R('/EstablishContext/<scope>', endpoint=self.establishcontext),
-            R('/<handle>/ListReaders/<readergroup>', endpoint=self.listreaders),
-            R('/<handle>/Connect/<readername>/<mode>/<protocol>', endpoint=self.connect),
-            R('/<handle>/Transmit/<protocol>/<apdu>', endpoint=self.transmit),
-            R('/<handle>/Disconnect/<disposition>', endpoint=self.disconnect),
-            R('/<handle>/ReleaseContext', endpoint=self.releasecontext),
-            R('/log/<handle>', endpoint=self.log),
+            R('/EstablishContext/<int:dwScope>', endpoint=self.establishcontext),
+            R('/<int:handle>/ListReaders/<mszGroups>', endpoint=self.listreaders),
+            R('/<int:handle>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocol>',
+              endpoint=self.connect),
+            R('/<int:handle>/Transmit/<int:dwProtocol>/<apdu>', endpoint=self.transmit),
+            R('/<int:handle>/Disconnect/<int:dwDisposition>', endpoint=self.disconnect),
+            R('/<int:handle>/ReleaseContext', endpoint=self.releasecontext),
+            R('/log/<int:handle>', endpoint=self.log),
             ])
 
     def welcome(self, request):
         return werkzeug.Response("Welcome to the universal SCard Web Proxy")
 
-    def establishcontext(self, request, scope):
-        impl = self.implchooser.chooseone()
-        dwScope = int( scope )
+    def establishcontext(self, request, dwScope):
+        impl = implchooser.chooseone()
         hresult, hContext = impl.SCardEstablishContext(dwScope)
-        hContext = self.handlefactory.getauniqueone(hContext, impl)
-        self.logger.loginput(__name__, hContext, dwScope=dwScope)
-        self.logger.logoutput(__name__, hContext, hresult=hresult, hContext=hContext)
-        return werkzeug.Response(json.dumps({"hresult":hresult, "hcontext":hContext, "HRformat": SCardGetErrorMessage(hresult)}))
+        hContext = getauniquehandle(hContext, impl)
+        logger.loginput(__name__, hContext, dwScope=dwScope)
+        logger.logoutput(__name__, hContext, hresult=hresult, hContext=hContext)
+        return werkzeug.Response(json.dumps({"hresult":hresult, "hcontext":hContext,
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def listreaders(self, request, handle, readergroup):
-        handle = int(handle)
-        impl = self.handlefactory.getimplfor(handle)
-        readergroup = json.loads(readergroup)
-        hContext = self.handlefactory.getreal(handle)
-        self.logger.loginput(__name__, handle, readergroup=readergroup)
-        hresult, readers = impl.SCardListReaders( hContext, readergroup )
-        self.logger.logoutput(__name__, handle, hresult=hresult, readers=readers)
-        return werkzeug.Response(json.dumps({"hresult":hresult, "readers":readers, "HRformat": SCardGetErrorMessage(hresult)}))
+    def listreaders(self, request, handle, mszGroups):
+        impl = getimplfor(handle)
+        mszGroups = json.loads(mszGroups)
+        hContext = getreal(handle)
+        logger.loginput(__name__, handle, readergroup=mszGroups)
+        hresult, readers = impl.SCardListReaders( hContext, mszGroups )
+        logger.logoutput(__name__, handle, hResult=hresult, mszReaders=readers)
+        return werkzeug.Response(json.dumps({"hResult":hresult, "readers":readers,
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def connect(self, request, handle, readername, mode, protocol):
-        handle = int(handle)
-        impl = self.handlefactory.getimplfor(handle)
-        hContext = self.handlefactory.getreal(handle)
-	hresult, hCard, dwActiveProtocol = impl.SCardConnect(hContext, str(readername), int(mode), int(protocol))
-	hCard = self.handlefactory.getauniqueone(hCard, impl)
-	return werkzeug.Response(json.dumps({"hresult":hresult, "hCard":hCard, "dwActiveProtocol":dwActiveProtocol, "HRformat": SCardGetErrorMessage(hresult)}))
+    def connect(self, request, handle, szReader, dwSharedMode, dwPreferredProtocol):
+        impl = getimplfor(handle)
+        hContext = getreal(handle)
+        szReader = str(szReader)
+	hresult, hCard, dwActiveProtocol = impl.SCardConnect(
+            hContext, szReader, dwSharedMode, dwPreferredProtocol)
+	hCard = getauniquehandle(hCard, impl)
+	return werkzeug.Response(json.dumps({"hResult":hresult, "hCard":hCard,
+                                             "dwActiveProtocol":dwActiveProtocol, 
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def disconnect(self, request, handle, disposition):
-        handle = int(handle)
-        impl = self.handlefactory.getimplfor(handle)
-        hCard = self.handlefactory.getreal(handle)
-        hresult = impl.SCardDisconnect(hCard, int(disposition))
-        return werkzeug.Response(json.dumps({"hresult": hresult, "HRformat": SCardGetErrorMessage(hresult)}))
+    def disconnect(self, request, handle, dwDisposition):
+        impl = getimplfor(handle)
+        hCard = getreal(handle)
+        hresult = impl.SCardDisconnect(hCard, dwDisposition)
+        return werkzeug.Response(json.dumps({"hresult": hresult, 
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def transmit(self, request, handle, protocol, apdu):
-        handle = int(handle)
-	impl = self.handlefactory.getimplfor(handle)
-        hCard = self.handlefactory.getreal(handle)
-	hresult, response = impl.SCardTransmit(hCard, int(protocol), json.loads(apdu))
-	return werkzeug.Response(json.dumps({"hresult": hresult, "response": response, "HRformat": SCardGetErrorMessage(hresult)}))
+    def transmit(self, request, handle, dwProtocol, apdu):
+	impl = getimplfor(handle)
+        hCard = getreal(handle)
+	hresult, response = impl.SCardTransmit(hCard, dwProtocol, json.loads(apdu))
+	return werkzeug.Response(json.dumps({"hresult": hresult, "response": response,
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
         
 
     def releasecontext(self, request, handle):
-        handle = int(handle)
-        impl = self.handlefactory.getimplfor(handle)
-        self.logger.loginput(__name__, handle)
-        hContext = self.handlefactory.getreal(handle)
+        impl = getimplfor(handle)
+        hContext = getreal(handle)
+        logger.loginput(__name__, handle)
         hresult = impl.SCardReleaseContext(hContext)
-        self.logger.logoutput(__name__, handle, hresult=hresult)
-        return werkzeug.Response(json.dumps({"hresult":hresult, "HRformat": SCardGetErrorMessage(hresult)}))
+        logger.logoutput(__name__, handle, hresult=hresult)
+        return werkzeug.Response(json.dumps({"hresult":hresult,
+                                             "HRformat": SCardGetErrorMessage(hresult)}))
         
 
     def log(self, request, handle):

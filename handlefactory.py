@@ -1,21 +1,30 @@
 import random
 
-class HandleFactory:
-    
-    def __init__(self):
-        self.list = {}
-        self.current = {}
+"""
+As handles are internaly usd to keep track of the implementation and for logging
+It is handy to make them unique.
+This module cares about that and keep record of the implementation that belong 
+to one handle
+"""
 
-    def getauniqueone(self, current, impl):
-        res = current
-        while res in self.list:
-            res = random.randint(0,2**32 - 1)
-        self.list[res] = impl
-        self.current[res] = current
-        return res
+impls = {}
+real = {}
 
-    def getimplfor(self, handle):
-        return self.list[handle]
+def getauniquehandle(current, impl):
+    res = current
+    while res in impls:
+        res = random.randint(0,2**32 - 1)
+    impls[res] = impl
+    real[res] = current
+    return res
 
-    def getreal(self, handle):
-        return self.current[handle]
+def getimplfor(handle):
+    return impls[handle]
+
+def getreal(handle):
+    return real[handle]
+
+def removeimplfor(handle):
+    impl = impls[handle]
+    impls[handle] = None
+    del impl
