@@ -1,5 +1,4 @@
-
-
+import time
 try:
     import simplejson as json
 except:
@@ -9,7 +8,7 @@ from webscard import implchooser
 from webscard import logger
 
 from webscard.utils import expose, render
-from webscard.handlefactory import getauniquehandle, getimplfor, getreal
+from webscard.handlefactory import getauniquehandle, getimplfor, getreal, removeimplfor
 
 @expose('/')
 def welcome(request):
@@ -19,10 +18,12 @@ def welcome(request):
 @expose('/EstablishContext/<int:dwScope>')
 def establishcontext(request, dwScope):
     impl = implchooser.chooseone()
+    before = time.time() # we have to do it ourself as there is no handle before 
     hresult, hContext = impl.SCardEstablishContext(dwScope)
     hContext = getauniquehandle(hContext, impl)
-    logger.loginput(__name__, hContext, dwScope=dwScope)
-    logger.logoutput(__name__, hContext, hresult=hresult, hContext=hContext)
+    after = time.time() # to avoid taking the loginput in the measurmentg
+    logger.loginput(hContext, dwScope=dwScope, time=before)
+    logger.logoutput(hContext, hresult, hContext=hContext, time=after)
     return render(request, {"hresult":hresult, "hcontext":hContext})
 
 @expose('/<int:handle>/ListReaders', defaults={'mszGroups': "[]"})
@@ -31,23 +32,25 @@ def listreaders(request, handle, mszGroups):
     impl = getimplfor(handle)
     mszGroups = json.loads(mszGroups)
     hContext = getreal(handle)
-    logger.loginput(__name__, handle, readergroup=mszGroups)
+    logger.loginput(handle, readergroup=mszGroups)
     hresult, readers = impl.SCardListReaders( hContext, mszGroups )
-    logger.logoutput(__name__, handle, hResult=hresult, mszReaders=readers)
+    logger.logoutput(handle, hresult, mszReaders=readers)
     return render(request, {"hresult":hresult, "readers":readers})
 
 
 @expose('/<int:handle>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocol': 3})
-@expose('/<int:handle>/Connect/<szReader>/<int:dwSharedMode>',
-        defaults={'dwPreferredProtocol': 3})
 @expose('/<int:handle>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocol>')
 def connect(request, handle, szReader, dwSharedMode, dwPreferredProtocol):
     impl = getimplfor(handle)
     hContext = getreal(handle)
     szReader = str(szReader)
+    logger.loginput(handle, szReader=szReader, dwSharedMode=dwSharedMode,
+                    dwPreferredProtocol=dwPreferredProtocol)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
         hContext, szReader, dwSharedMode, dwPreferredProtocol)
+    logger.logoutput(handle, hresult, hCard=hCard,
+                     dwActiveProtocol=dwActiveProtocol)
     hCard = getauniquehandle(hCard, impl)
     return render(request, {"hresult":hresult, "hCard":hCard,
                             "dwActiveProtocol":dwActiveProtocol})
@@ -57,7 +60,10 @@ def connect(request, handle, szReader, dwSharedMode, dwPreferredProtocol):
 def transmit(request, handle, dwProtocol, apdu):
     impl = getimplfor(handle)
     hCard = getreal(handle)
-    hresult, response = impl.SCardTransmit(hCard, dwProtocol, json.loads(apdu))
+    apdu = json.loads(apdu)
+    logger.loginput(handle, dwProtocol=dwProtocol, apdu=apdu)
+    hresult, response = impl.SCardTransmit(hCard, dwProtocol, apdu)
+    logger.logoutput(handle, hresult, response=response)
     return render(request, {"hresult": hresult, "response": response})
 
 @expose('/<int:handle>/Disconnect', defaults={'dwDisposition': 0})
@@ -65,18 +71,22 @@ def transmit(request, handle, dwProtocol, apdu):
 def disconnect(request, handle, dwDisposition):
     impl = getimplfor(handle)
     hCard = getreal(handle)
+    logger.loginput(handle, dwDisposition=dwDisposition)
     hresult = impl.SCardDisconnect(hCard, dwDisposition)
+    logger.logoutput(handle, hresult)
+    removeimplfor(handle)
     return render( request, {"hresult": hresult})
 
 @expose('/<int:handle>/ReleaseContext')
 def releasecontext(request, handle):
     impl = getimplfor(handle)
     hContext = getreal(handle)
-    logger.loginput(__name__, handle)
+    logger.loginput(handle)
     hresult = impl.SCardReleaseContext(hContext)
-    logger.logoutput(__name__, handle, hresult=hresult)
+    logger.logoutput(handle, hresult)
+    removeimplfor(handle)
     return render(request, {"hresult":hresult})
         
 @expose('/<int:handle>')
 def log(request, handle):
-    pass
+    return render(request, logger.getlogsfor(handle))

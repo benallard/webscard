@@ -1,6 +1,6 @@
 from smartcard.scard import *
 
-class PyScardImpl:
+class Implementation:
     
     def SCardEstablishContext(self, dwScope):
         return SCardEstablishContext( dwScope )

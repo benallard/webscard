@@ -1,3 +1,7 @@
+"""
+Mainly (completely) taken from the Werkzeug tutorial
+"""
+
 from werkzeug import Local, LocalManager, Response
 from werkzeug.routing import Map, Rule
 
@@ -8,9 +12,6 @@ except ImportError:
 
 from smartcard.scard import SCardGetErrorMessage
 
-"""
-Mainly (completely) taken from the Werkzeug tutorial
-"""
 
 local = Local()
 local_manager = LocalManager([local])
@@ -26,8 +27,9 @@ def expose(rule, **kw):
     return decorate
 
 def render(request, dict):
+    """ Here we could do something based on the User Agent """
     try:
         dict['HRformat'] = SCardGetErrorMessage(dict['hresult'])
-    except KeyError:
+    except:
         pass
-    return Response(json.dumps(dict))
+    return Response(json.dumps(dict, indent=4))
