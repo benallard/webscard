@@ -14,6 +14,9 @@ class Implementation:
     def SCardConnect(self, hContext, zreader, dwShared, dwProtocol):
         return SCardConnect(hContext, zreader, dwShared, dwProtocol)
 
+    def SCardStatus(self, hCard):
+        return SCardStatus(hCard)
+
     def SCardTransmit(self, hContext, dwProtocol, apdu):
         return SCardTransmit(hContext, dwProtocol, apdu)
 

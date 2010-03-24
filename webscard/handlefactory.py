@@ -35,9 +35,12 @@ def removeimplfor(handle):
     del impl
 
 def populatefromoldhandles():
-    f = open(RECORDFILENAME, 'r')
-    for handle in f:
-        impls[int(handle)] = None
-    f.close()
+    try:
+        f = open(RECORDFILENAME, 'r')
+        for handle in f:
+            impls[int(handle)] = None
+        f.close()
+    except IOError:
+        pass
 
 populatefromoldhandles()

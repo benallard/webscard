@@ -18,7 +18,7 @@ local_manager = LocalManager([local])
 application = local('application')
 
 
-url_map = Map()
+url_map = Map(redirect_defaults=False)
 def expose(rule, **kw):
     def decorate(f):
         kw['endpoint'] = f.__name__
@@ -27,9 +27,17 @@ def expose(rule, **kw):
     return decorate
 
 def render(request, dict):
-    """ Here we could do something based on the User Agent """
+    """ Here we could do something based on the request"""
+    indent = 4
+    if 'Indent' in request.headers:
+        indent = request.headers['Indent']
+        if indent == "no":
+            indent = None
+        else:
+            indent = int(indent)
     try:
         dict['HRformat'] = SCardGetErrorMessage(dict['hresult'])
     except:
         pass
-    return Response(json.dumps(dict, indent=4))
+    return Response(json.dumps(dict, indent=indent, separators=(',', ':')))
+
