@@ -13,3 +13,9 @@ class PyScardImpl:
 
     def SCardConnect(self, hContext, zreader, dwShared, dwProtocol):
         return SCardConnect(hContext, zreader, dwShared, dwProtocol)
+
+    def SCardTransmit(self, hContext, dwProtocol, apdu):
+        return SCardTransmit(hContext, dwProtocol, apdu)
+
+    def SCardDisconnect(self, hCard, dwDisposition):
+        return SCardDisconnect(hCard, dwDisposition)

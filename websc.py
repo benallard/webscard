@@ -5,8 +5,7 @@ from werkzeug.debug import DebuggedApplication
 from smartcard.scard import *
 
 try:
-    import simplejson
-    json = simplejson
+    import simplejson as json
 except:
     import json
 
@@ -25,7 +24,8 @@ class WebSC(object):
             R('/EstablishContext/<scope>', endpoint=self.establishcontext),
             R('/<handle>/ListReaders/<readergroup>', endpoint=self.listreaders),
             R('/<handle>/Connect/<readername>/<mode>/<protocol>', endpoint=self.connect),
-            R('/<handle>/Transmit/<apdu>', endpoint=self.transmit),
+            R('/<handle>/Transmit/<protocol>/<apdu>', endpoint=self.transmit),
+            R('/<handle>/Disconnect/<disposition>', endpoint=self.disconnect),
             R('/<handle>/ReleaseContext', endpoint=self.releasecontext),
             R('/log/<handle>', endpoint=self.log),
             ])
@@ -56,11 +56,24 @@ class WebSC(object):
         handle = int(handle)
         impl = self.handlefactory.getimplfor(handle)
         hContext = self.handlefactory.getreal(handle)
-	hresult, hcard, dwActiveProtocol = impl.SCardConnect(hContext, str(readername), int(mode), int(protocol))
-	return werkzeug.Response(json.dumps({"hresult":hresult, "hcard":hcard, "dwActiveProtocol":dwActiveProtocol, "HRformat": SCardGetErrorMessage(hresult)})) 
+	hresult, hCard, dwActiveProtocol = impl.SCardConnect(hContext, str(readername), int(mode), int(protocol))
+	hCard = self.handlefactory.getauniqueone(hCard, impl)
+	return werkzeug.Response(json.dumps({"hresult":hresult, "hCard":hCard, "dwActiveProtocol":dwActiveProtocol, "HRformat": SCardGetErrorMessage(hresult)}))
 
-    def transmit(self, request, handle, apdu):
-        pass
+    def disconnect(self, request, handle, disposition):
+        handle = int(handle)
+        impl = self.handlefactory.getimplfor(handle)
+        hCard = self.handlefactory.getreal(handle)
+        hresult = impl.SCardDisconnect(hCard, int(disposition))
+        return werkzeug.Response(json.dumps({"hresult": hresult, "HRformat": SCardGetErrorMessage(hresult)}))
+
+    def transmit(self, request, handle, protocol, apdu):
+        handle = int(handle)
+	impl = self.handlefactory.getimplfor(handle)
+        hCard = self.handlefactory.getreal(handle)
+	hresult, response = impl.SCardTransmit(hCard, int(protocol), json.loads(apdu))
+	return werkzeug.Response(json.dumps({"hresult": hresult, "response": response, "HRformat": SCardGetErrorMessage(hresult)}))
+        
 
     def releasecontext(self, request, handle):
         handle = int(handle)
