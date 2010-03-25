@@ -55,6 +55,16 @@ def connect(request, handle, szReader, dwSharedMode, dwPreferredProtocol):
     return render(request, {"hresult":hresult, "hCard":hCard,
                             "dwActiveProtocol":dwActiveProtocol})
 
+@expose('/<int:handle>/Status')
+def status(request, handle):
+    impl = getimplfor(handle)
+    hCard = getreal(handle)
+    logger.loginput(handle)
+    hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard)
+    logger.logoutput(handle, hresult, readername = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
+    return render(request, {"hresult":hresult, "readername":readername, 
+        "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
+
 @expose('/<int:handle>/Transmit/<apdu>', defaults={'dwProtocol': 2})
 @expose('/<int:handle>/Transmit/<int:dwProtocol>/<apdu>')
 def transmit(request, handle, dwProtocol, apdu):
