@@ -54,6 +54,13 @@ function connect(hcontext, reader, shared, protocol)
    return o.hresult, o.hCard, o.dwActiveProtocol
 end
 
+function status(hcard)
+   assert(c:setopt(curl.OPT_URL, server..hcard.."/Status"))
+   assert(c:perform())
+   local o = json.decode(answer)
+   return o.hresult, o.readername, o.dwState, o.dwProtocol, o.ATR
+end
+
 function disconnect(hcard, disposition)
    assert(c:setopt(curl.OPT_URL, server..hcard.."/Disconnect/"..disposition))
    assert(c:perform())
