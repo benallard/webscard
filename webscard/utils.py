@@ -5,6 +5,9 @@ Mainly (completely) taken from the Werkzeug tutorial
 from werkzeug import Local, LocalManager, Response
 from werkzeug.routing import Map, Rule
 
+from sqlalchemy import MetaData
+from sqlalchemy.orm import create_session, scoped_session
+
 try:
     import simplejson as json
 except ImportError:
@@ -12,11 +15,13 @@ except ImportError:
 
 from smartcard.scard import SCardGetErrorMessage
 
-
 local = Local()
 local_manager = LocalManager([local])
 application = local('application')
 
+metadata = MetaData()
+dbsession = scoped_session(lambda: create_session(application.database_engine,
+    transactional=True), local_manager.get_ident)
 
 url_map = Map(redirect_defaults=False)
 def expose(rule, **kw):
