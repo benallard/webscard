@@ -29,10 +29,10 @@ class WebSCard(object):
 
     def getresponse(self, request):
         session_data = request.client_session
-	if 'sid' not in session_data:
-            session = Session(implementations.getone())
-        else:
+	if 'sid' in session_data and session_data['sid'] is not None:
             session = Session.query.get(session_data['sid'])
+        else:
+            session = Session(implementations.getone())
         endpoint, values = local.url_adapter.match()
         handler = getattr(views, endpoint)
 
