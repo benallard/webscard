@@ -21,9 +21,10 @@ class WebSCard(object):
     def __init__(self, config):
         local.application = self
         self.config = config
-        db_uri = self.config.getstring('db.uri', "sqlite:///:memory")
+        db_uri = self.config.getstring('db.uri', "sqlite:///:memory:")
         self.database_engine = create_engine(db_uri, convert_unicode=True)
-        if db_uri == "sqlite:///:memory":
+        if db_uri == "sqlite:///:memory:":
+            print "init db"
             self.init_database()
         dbsession.configure(bind=self.database_engine)
         self.random_key = "".join([random.choice(string.letters)
