@@ -4,7 +4,7 @@ try:
 except:
     import json
 
-from webscard import implchooser
+from webscard import implementations
 from webscard import logger
 
 from webscard.utils import expose, render
@@ -17,7 +17,7 @@ def welcome(request):
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')
 def establishcontext(request, dwScope):
-    impl = implchooser.chooseone()
+    impl = implementations.getone()
     before = time.time() # we have to do it ourself as there is no handle before 
     hresult, hContext = impl.SCardEstablishContext(dwScope)
     hContext = getauniquehandle(hContext, impl)
@@ -40,6 +40,8 @@ def listreaders(request, handle, mszGroups):
 
 @expose('/<int:handle>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocol': 3})
+@expose('/<int:handle>/Connect/dwSharedMode/<szReader>',
+        defaults={'dwPreferredProtocol': 3})
 @expose('/<int:handle>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocol>')
 def connect(request, handle, szReader, dwSharedMode, dwPreferredProtocol):
     impl = getimplfor(handle)

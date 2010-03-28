@@ -1,5 +1,5 @@
 """
-Mainly (completely) taken from the Werkzeug tutorial
+Mainly taken from the Werkzeug tutorial
 """
 
 from werkzeug import Local, LocalManager, Response
@@ -26,15 +26,11 @@ def expose(rule, **kw):
         return f
     return decorate
 
+def isabrowser(request):
+    return "Mozilla" in request.headers['User-agent']
+
 def render(request, dict):
-    """ Here we could do something based on the request"""
-    indent = 4
-    if 'Indent' in request.headers:
-        indent = request.headers['Indent']
-        if indent == "no":
-            indent = None
-        else:
-            indent = int(indent)
+    indent = isabrowser(request) and 4 or None
     try:
         dict['HRformat'] = SCardGetErrorMessage(dict['hresult'])
     except:
