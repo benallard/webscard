@@ -32,7 +32,7 @@ def expose(rule, **kw):
     return decorate
 
 def isabrowser(request):
-    return "Mozilla" in request.headers['User-agent']
+    return "Mozilla" in request.headers['User-Agent']
 
 def render(request, dict):
     indent = isabrowser(request) and 4 or None
