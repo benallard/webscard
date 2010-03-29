@@ -1,7 +1,7 @@
+from sqlalchemy import create_engine
 from werkzeug import ClosingIterator
 from werkzeug.exceptions import HTTPException
 
-from sqlalchemy import create_engine
 
 from webscard.utils import dbsession, local, local_manager, metadata ,url_map
 from webscard import views
@@ -18,6 +18,7 @@ class WebSCard(object):
     def __init__(self):
         local.application = self
         self.database_engine = create_engine("sqlite:////tmp/webscard.db", convert_unicode=True)
+        dbsession.configure(bind=self.database_engine)
 
     def __call__(self, environ, start_response):
         local.application = self

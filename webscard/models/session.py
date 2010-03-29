@@ -23,6 +23,8 @@ class Session(object):
         dbsession.add(self)
 
     def store(self):
+        if self.uid is None:
+            raise ValueError(self.uid)
         impls[self.uid] = self.impl
 
     @property
