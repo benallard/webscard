@@ -4,6 +4,7 @@ try:
 except:
     import json
 
+
 from webscard import logger
 
 from webscard.utils import expose, render, dbsession
@@ -23,6 +24,7 @@ def welcome(request, session):
 @expose('/EstablishContext/<int:dwScope>')
 def establishcontext(request, session, dwScope):
     impl = session.implementation
+
     before = time.time() # we have to do it ourself as there is no handle before 
     hresult, hContext = impl.SCardEstablishContext(dwScope)
     after = time.time()
@@ -38,6 +40,7 @@ def establishcontext(request, session, dwScope):
 @expose('/<int:context>/ListReaders/<mszGroups>')
 def listreaders(request, session, context, mszGroups):
     hContext = Context.query.get(context)
+    session.validatecontext(hContext) # throw an unauthorized
     impl = session.implementation
     mszGroups = json.loads(mszGroups)
     logger.loginput(hContext, readergroup=mszGroups)
@@ -53,6 +56,7 @@ def listreaders(request, session, context, mszGroups):
 @expose('/<int:context>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocol>')
 def connect(request, session, context, szReader, dwSharedMode, dwPreferredProtocol):
     hContext = Context.query.get(context)
+    session.validatecontext(hContext) # throw an unauthorized
     impl = session.implementation
     szReader = str(szReader)
     logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
@@ -69,6 +73,7 @@ def connect(request, session, context, szReader, dwSharedMode, dwPreferredProtoc
 @expose('/<int:card>/Status')
 def status(request, session, card):
     hCard = Handle.query.get(card)
+    session.validatehandle(hCard) # throw an unauthorized
     impl = session.implementation
     logger.loginput(hCard.context)
     hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard.val)
@@ -80,6 +85,7 @@ def status(request, session, card):
 @expose('/<int:card>/Transmit/<int:dwProtocol>/<apdu>')
 def transmit(request, session, card, dwProtocol, apdu):
     hCard = Handle.query.get(card)
+    session.validatecontext(hCard) # throw an unauthorized
     hContext = hCard.context
     impl = session.implementation
     apdu = json.loads(apdu)
@@ -92,6 +98,7 @@ def transmit(request, session, card, dwProtocol, apdu):
 @expose('/<int:card>/Disconnect/<int:dwDisposition>')
 def disconnect(request, session, card, dwDisposition):
     hCard = Handle.query.get(card)
+    session.validatecontext(hCard) # throw an unauthorized
     hContext = hCard.context
     impl = session.implementation
     logger.loginput(hContext, dwDisposition=dwDisposition)
@@ -102,6 +109,7 @@ def disconnect(request, session, card, dwDisposition):
 @expose('/<int:context>/ReleaseContext')
 def releasecontext(request, session, context):
     hContext = Context.query.get(context)
+    session.validatecontext(hContext) # throw an unauthorized
     impl = session.implementation
     logger.loginput(hContext)
     hresult = impl.SCardReleaseContext(hContext.val)
