@@ -3,7 +3,7 @@ from sqlalchemy.orm import mapper, relation
 
 from werkzeug.exceptions import Unauthorized
 
-from webscard.utils import dbsession, metadata
+from webscard.utils import dbsession, metadata, application
 from webscard.models.handle import Context
 
 
@@ -30,12 +30,16 @@ class Session(object):
         impls[self.uid] = self.impl
 
     def validatecontext(self, context):
+        if not application.config.getbool('internal.sessioncheck', True):
+            return
         if context not in self.contexts:
             raise Unauthorized("Current session #%d is not #%d where the"
                                " context has been aquired" % (self.uid,
                                context.session.uid))
 
     def validatehandle(self, handle):
+        if not application.config.getbool('internal.sessioncheck', True):
+            return
         res = False
         for context in self.contexts:
             if handle in context.handles:

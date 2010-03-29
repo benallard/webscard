@@ -12,3 +12,11 @@ class Config(SafeConfigParser):
         except (NoSectionError, NoOptionError):
             val = default
         return val
+
+    def getbool(self, item, default=False):
+        section, option = item.split('.')
+        try:
+            val = self.getboolean(section, option)
+        except (NoSectionError, NoOptionError):
+            val = default
+        return val
