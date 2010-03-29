@@ -2,16 +2,16 @@
 Mainly taken from the Werkzeug tutorial
 """
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 from werkzeug import Local, LocalManager, Response
 from werkzeug.routing import Map, Rule
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 from smartcard.scard import SCardGetErrorMessage
 

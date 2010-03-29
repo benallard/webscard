@@ -3,7 +3,8 @@ from werkzeug import script
 
 def make_app():
     from webscard.application import WebSCard
-    return WebSCard()
+    from webscard.config import Config
+    return WebSCard(Config("webscard.cfg"))
 
 def make_shell():
     application = make_app()

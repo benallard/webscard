@@ -1,3 +1,6 @@
+import string
+import random
+
 from sqlalchemy import create_engine
 from werkzeug import ClosingIterator
 from werkzeug.exceptions import HTTPException
@@ -15,10 +18,16 @@ from webscard import implementations
 
 class WebSCard(object):
 
-    def __init__(self):
+    def __init__(self, config):
         local.application = self
-        self.database_engine = create_engine("sqlite:////tmp/webscard.db", convert_unicode=True)
+        self.config = config
+        db_uri = self.config.getstring('db.uri', "sqlite:///:memory")
+        self.database_engine = create_engine(db_uri, convert_unicode=True)
+        if db_uri == "sqlite:///:memory":
+            self.init_database()
         dbsession.configure(bind=self.database_engine)
+        self.random_key = "".join([random.choice(string.letters)
+                                    for i in range(20)])
 
     def __call__(self, environ, start_response):
         local.application = self
@@ -30,9 +39,10 @@ class WebSCard(object):
 
     def getresponse(self, request):
         session_data = request.client_session
-	if 'sid' in session_data and session_data['sid'] is not None:
+	if ('sid' in session_data) and (session_data['sid'] is not None):
             session = Session.query.get(session_data['sid'])
         else:
+            print "---------------------------new session !"
             session = Session(implementations.getone())
         endpoint, values = local.url_adapter.match()
         handler = getattr(views, endpoint)
