@@ -22,7 +22,13 @@ end
 local c = assert(curl.new())
 assert(c:setopt(curl.OPT_WRITEFUNCTION,receive))
 assert(c:setopt(curl.OPT_HTTPHEADER, "Indent: no"))
+assert(c:setopt(curl.OPT_USERAGENT, "Lua WebSCard Client"))
 
+local cookiefile = "cookie"
+
+assert(c:setopt(curl.OPT_COOKIESESSION, true))
+assert(c:setopt(curl.OPT_COOKIEJAR, cookiefile))
+assert(c:setopt(curl.OPT_COOKIEFILE, cookiefile))
 
 function establishcontext(scope)
    assert(c:setopt(curl.OPT_URL, server.."EstablishContext/"..scope))
@@ -43,7 +49,7 @@ function listreaders(hcontext, group)
    assert(c:setopt(curl.OPT_URL, server..hcontext.."/ListReaders/"..group))
    assert(c:perform())
    local o = json.decode(answer)
-   return o.hresult, o.readers
+   return o.hresult, o.mszReaders
 end
 
 function connect(hcontext, reader, shared, protocol)
