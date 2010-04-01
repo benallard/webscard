@@ -29,9 +29,9 @@ def establishcontext(request, session, dwScope):
     hresult, hContext = impl.SCardEstablishContext(dwScope)
     after = time.time()
 
-    dbsession.commit() # to get a session_uid
+    dbsession.flush() # to get a session_uid
     hContext = Context(session, hContext, impl)
-    dbsession.commit() # to get a context_uid
+    dbsession.flush() # to get a context_uid
     logger.loginput(hContext, dwScope=dwScope, time=before)
     logger.logoutput(hContext, hresult, time=after)
     return render(request, {"hresult":hresult, "hcontext":hContext.uid})
@@ -66,7 +66,7 @@ def connect(request, session, context, szReader, dwSharedMode, dwPreferredProtoc
     logger.logoutput(hContext, hresult, hCard=hCard,
                      dwActiveProtocol=dwActiveProtocol)
     hCard = Handle(hCard, hContext)
-    dbsession.commit()
+    dbsession.flush()
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
 

@@ -41,3 +41,5 @@ def render(request, dict):
         pass
     return Response(json.dumps(dict, indent=indent, separators=(',', ':')))
 
+def Exception2JSON(e):
+    return {'hresult': 0x80100003}
