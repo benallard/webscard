@@ -81,11 +81,35 @@ def status(request, session, card):
     return render(request, {"hresult":hresult, "szReaderName":readername, 
         "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
 
+@expose('/<int:card>/BeginTransaction')
+def begintransaction(request, session, card):
+    hCard = Handle.query.get(card)
+    session.validatehandle(hCard)
+    hContext = hCard.context
+    impl = sesion.implementation
+    logger.loginput(hContext)
+    hresult = impl.SCardBeginTransaction(hCard.val)
+    logger.logoutput(hContext, hresult)
+    return render(request, {'hresult': hresult})
+
+@expose('/<int:card>/EndTransaction', defaults={'dwDisposition':0})
+@expose('/<int:card>/EndTransaction/<int:dwDisposition>')
+def endtransaction(request, session, card, dwDisposition):
+    hCard = Handle.query.get(card)
+    session.validatehandle(hCard)
+    hContext = hCard.context
+    impl = session.implementation
+    logger.loginput(hContext, dwDisposition=dwDisposition)
+    hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
+    logger.logoutput(hContext, hresult)
+    return render(request, {'hresult': hresult})
+
+
 @expose('/<int:card>/Transmit/<apdu>', defaults={'dwProtocol': 2})
 @expose('/<int:card>/Transmit/<int:dwProtocol>/<apdu>')
 def transmit(request, session, card, dwProtocol, apdu):
     hCard = Handle.query.get(card)
-    session.validatecontext(hCard) # throw an unauthorized
+    session.validatehandle(hCard)
     hContext = hCard.context
     impl = session.implementation
     apdu = json.loads(apdu)
@@ -98,7 +122,7 @@ def transmit(request, session, card, dwProtocol, apdu):
 @expose('/<int:card>/Disconnect/<int:dwDisposition>')
 def disconnect(request, session, card, dwDisposition):
     hCard = Handle.query.get(card)
-    session.validatecontext(hCard) # throw an unauthorized
+    session.validatehandle(hCard)
     hContext = hCard.context
     impl = session.implementation
     logger.loginput(hContext, dwDisposition=dwDisposition)
