@@ -86,7 +86,7 @@ def begintransaction(request, session, card):
     hCard = Handle.query.get(card)
     session.validatehandle(hCard)
     hContext = hCard.context
-    impl = sesion.implementation
+    impl = session.implementation
     logger.loginput(hContext)
     hresult = impl.SCardBeginTransaction(hCard.val)
     logger.logoutput(hContext, hresult)
