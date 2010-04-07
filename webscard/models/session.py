@@ -4,8 +4,11 @@ from sqlalchemy.orm import mapper, relation
 from werkzeug.exceptions import Unauthorized
 
 from webscard.utils import dbsession, metadata, application
-from webscard.models.handle import Context
+from webscard.models.handle import Context, Handle
 
+from smartcard.scard import SCARD_E_INVALID_HANDLE, SCARD_E_INVALID_PARAMETER
+
+from webscard import implementations
 
 session_table = Table('sessions', metadata,
     Column('uid', Integer, primary_key=True)
@@ -19,8 +22,8 @@ class Session(object):
     shouldsave = False
     impl = None
 
-    def __init__(self, implementation):
-        self.impl = implementation
+    def __init__(self):
+        self.impl = implementations.getone()
 	self.shouldsave = True
         dbsession.add(self)
 
@@ -30,24 +33,26 @@ class Session(object):
         impls[self.uid] = self.impl
 
     def validatecontext(self, context):
-        if not application.config.getbool('internal.sessioncheck', True):
-            return
-        if context not in self.contexts:
-            raise Unauthorized("Current session #%d is not #%d where the"
-                               " context has been aquired" % (self.uid,
-                               context.session.uid))
+        hContext = Context.query.get(context)
+        if hContext not in self.contexts:
+            return {'message': "Current session #%d is not #%d where the" \
+                        " context has been aquired" % (self.uid,
+                                                       hContext.session.uid),
+                    'hresult': SCARD_E_INVALID_PARAMETER}
+        return None
 
     def validatehandle(self, handle):
-        if not application.config.getbool('internal.sessioncheck', True):
-            return
+        handle = Handle.query.get(handle)
         res = False
-        for context in self.contexts:
-            if handle in context.handles:
+        for hContext in self.contexts:
+            if handle in hContext.handles:
                 res = True
         if not res:
-            raise Unauthorized("Current handle #%d does not belong to any "
-                               "context opened in this session #%d" %(handle.uid,
-                               self.uid))
+            return {'message': "Current handle #%d does not belong to any " \
+                        "context opened in this session #%d" % (handle.uid,
+                                                                self.uid),
+                    'hresult': SCARD_E_INVALID_HANDLE}
+        return None
 
     @property
     def implementation(self):

@@ -3,14 +3,13 @@ import random
 
 from sqlalchemy import create_engine
 from werkzeug import ClosingIterator
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import NotFound
 
 
 from webscard.utils import dbsession, local, local_manager, metadata ,url_map
 from webscard import views
 
 from webscard.models import handle, session
-from webscard.models.session import Session
 
 from webscard.request import Request
 
@@ -21,13 +20,14 @@ class WebSCard(object):
     def __init__(self, config):
         local.application = self
         self.config = config
-        db_uri = self.config.getstring('db.uri', "sqlite:///:memory")
+        db_uri = self.config.getstring('db.uri', "sqlite:///:memory:")
         self.database_engine = create_engine(db_uri, convert_unicode=True)
-        if db_uri == "sqlite:///:memory":
+        if db_uri == "sqlite:///:memory:":
             self.init_database()
         dbsession.configure(bind=self.database_engine)
-        self.random_key = "".join([random.choice(string.letters)
-                                    for i in range(20)])
+        self.secret_key = config.getstring('cookies.secret', 
+                                           "".join([random.choice(string.letters)
+                                                    for i in range(20)]))
 
     def __call__(self, environ, start_response):
         local.application = self
@@ -38,23 +38,21 @@ class WebSCard(object):
                                [dbsession.remove, local_manager.cleanup])
 
     def getresponse(self, request):
-        session_data = request.client_session
-	if ('sid' in session_data) and (session_data['sid'] is not None):
-            session = Session.query.get(session_data['sid'])
-        else:
-            print "---------------------------new session !"
-            session = Session(implementations.getone())
-        endpoint, values = local.url_adapter.match()
-        handler = getattr(views, endpoint)
-
+        request.getsession()
         try:
-            response = handler(request, session, **values)
-        except HTTPException, e:
+            endpoint, values = local.url_adapter.match()
+        except NotFound, e:
             return e
-        
-        if session.shouldsave:
-            session.store()
-            request.client_session['sid'] = session.uid
+
+        handler = getattr(views, endpoint)
+        response = None
+        if self.config.getbool('internal.sessioncheck', True):
+            response = request.validatesession(**values)
+        if response is None:
+            response = handler(request, **values)
+
+        if request.shouldsavesession:
+            request.storesession()
             session_data = request.client_session.serialize()
             response.set_cookie('session_data', session_data)
         return response
