@@ -9,7 +9,7 @@ module("scard")
 
 local answer
 
-local server = [[http://10.0.6.111:3333/]]
+local server = [[http://localhost:3333/]]
 
 local function receive(s,b)
    -- stores the received data in the table t
@@ -58,6 +58,20 @@ function connect(hcontext, reader, shared, protocol)
    assert(c:perform())
    local o = json.decode(answer)
    return o.hresult, o.hCard, o.dwActiveProtocol
+end
+
+function begintransaction(hcard)
+   assert(c:setopt(curl.OPT_URL, server..hcard.."/BeginTransaction"))
+   assert(c:perform())
+   local o = json.decode(answer)
+   return o.hresult
+end
+
+function endtransaction(hcard, disposition)
+   assert(c:setopt(curl.OPT_URL, server..hcard.."/EndTransaction/"..disposition))
+   assert(c:perform())
+   local o = json.decode(answer)
+   return o.hresultg
 end
 
 function status(hcard)

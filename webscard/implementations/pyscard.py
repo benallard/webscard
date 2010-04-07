@@ -17,6 +17,12 @@ class Implementation:
     def SCardStatus(self, hCard):
         return SCardStatus(hCard)
 
+    def SCardBeginTransaction(self, hCard):
+        return SCardBeginTransaction(hCard)
+
+    def SCardEndTransaction(self, hCard, dwDisposition):
+        return SCardEndTransaction(hCard, dwDisposition)
+
     def SCardTransmit(self, hContext, dwProtocol, apdu):
         return SCardTransmit(hContext, dwProtocol, apdu)
 

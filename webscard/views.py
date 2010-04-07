@@ -30,9 +30,9 @@ def establishcontext(request, dwScope):
     hresult, hContext = impl.SCardEstablishContext(dwScope)
     after = time.time()
 
-    dbsession.commit() # to get a session_uid
+    dbsession.flush() # to get a session_uid
     hContext = Context(request.session, hContext, impl)
-    dbsession.commit() # to get a context_uid
+    dbsession.flush() # to get a context_uid
     logger.loginput(hContext, dwScope=dwScope, time=before)
     logger.logoutput(hContext, hresult, time=after)
     return render(request, {"hresult":hresult, "hcontext":hContext.uid})
@@ -65,7 +65,7 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
     logger.logoutput(hContext, hresult, hCard=hCard,
                      dwActiveProtocol=dwActiveProtocol)
     hCard = Handle(hCard, hContext)
-    dbsession.commit()
+    dbsession.flush()
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
 
@@ -78,6 +78,28 @@ def status(request, card):
     logger.logoutput(hCard.context, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
     return render(request, {"hresult":hresult, "szReaderName":readername, 
         "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
+
+@expose('/<int:card>/BeginTransaction')
+def begintransaction(request, card):
+    hCard = Handle.query.get(card)
+    hContext = hCard.context
+    impl = request.implementation
+    logger.loginput(hContext)
+    hresult = impl.SCardBeginTransaction(hCard.val)
+    logger.logoutput(hContext, hresult)
+    return render(request, {'hresult': hresult})
+
+@expose('/<int:card>/EndTransaction', defaults={'dwDisposition':0})
+@expose('/<int:card>/EndTransaction/<int:dwDisposition>')
+def endtransaction(request, card, dwDisposition):
+    hCard = Handle.query.get(card)
+    hContext = hCard.context
+    impl = request.implementation
+    logger.loginput(hContext, dwDisposition=dwDisposition)
+    hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
+    logger.logoutput(hContext, hresult)
+    return render(request, {'hresult': hresult})
+
 
 @expose('/<int:card>/Transmit/<apdu>', defaults={'dwProtocol': 2})
 @expose('/<int:card>/Transmit/<int:dwProtocol>/<apdu>')
@@ -114,7 +136,7 @@ def releasecontext(request, context):
 # name it differenty to avoid it being checked by the validator
 @expose('/<int:logcontext>')
 def log(request, logcontext):
-    return render(request, logger.getlogsfor(context))
+    return render(request, logger.getlogsfor(logcontext))
 
 @expose('/log', defaults={'sid':None})
 @expose('/log/<int:sid>')

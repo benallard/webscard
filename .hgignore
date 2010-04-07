@@ -1,3 +1,8 @@
 syntax:glob
 werkzeug
 *.pyc
+glob:luaclient/*.dll
+glob:*~
+glob:webscard.cfg
+glob:build/*
+glob:dist/*

@@ -1,7 +1,8 @@
-from sqlalchemy import Table, Column, Integer
+from datetime import datetime
+
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime
 from sqlalchemy.orm import mapper, relation
 
-from werkzeug.exceptions import Unauthorized
 
 from webscard.utils import dbsession, metadata, application
 from webscard.models.handle import Context, Handle
@@ -11,7 +12,11 @@ from smartcard.scard import SCARD_E_INVALID_HANDLE, SCARD_E_INVALID_PARAMETER
 from webscard import implementations
 
 session_table = Table('sessions', metadata,
-    Column('uid', Integer, primary_key=True)
+    Column('uid', Integer, primary_key=True),
+    Column('user_agent', Text),
+    Column('remote_addr', String(15)),
+    Column('firstactivity', DateTime),
+    Column('lastactivity', DateTime),
 )
 
 impls = {}
@@ -19,12 +24,13 @@ impls = {}
 class Session(object):
     """ We store here HTTP session """
     query = dbsession.query_property()
-    shouldsave = False
     impl = None
 
-    def __init__(self):
+    def __init__(self, request):
         self.impl = implementations.getone()
-	self.shouldsave = True
+        self.user_agent = request.headers['User-Agent']
+        self.remote_addr = request.remote_addr
+        self.firstactivity = datetime.now()
         dbsession.add(self)
 
     def store(self):
@@ -62,6 +68,9 @@ class Session(object):
 
     def __repr__(self):
         return "<session %d>" % self.uid
+
+    def update(self):
+        self.lastactivity = datetime.now()
 
 mapper(Session, session_table, properties={
     'contexts': relation(Context, backref='session')

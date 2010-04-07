@@ -1,6 +1,9 @@
 import time
 import inspect
 
+from webscard.models import operation
+
+
 record = {}
 
 def loginput(hContext, **params):
@@ -30,7 +33,14 @@ def logoutput(hContext, hresult, **params):
     current = current[function]
     current['output'] = params
     current['duration'] = current['output']['time'] - current['input']['time']
-    
+
+classdict = {
+    'establishcontext': operation.EstablishContext,
+    'releasecontext': operation.ReleaseContext,
+}
+
+def getclassfor(name):
+    return classdict.get(name, operation.Operation)
 
 def getlogsfor(context):
     return record[context]

@@ -31,7 +31,10 @@ def expose(rule, **kw):
     return decorate
 
 def isabrowser(request):
-    return "Mozilla" in request.headers['User-Agent']
+    try:
+        return "Mozilla" in request.headers['User-Agent']
+    except KeyError:
+        return False
 
 def render(request, dict):
     indent = isabrowser(request) and 4 or None
@@ -41,3 +44,5 @@ def render(request, dict):
         pass
     return Response(json.dumps(dict, indent=indent, separators=(',', ':')))
 
+def Exception2JSON(e):
+    return {'hresult': 0x80100003}
