@@ -13,7 +13,7 @@ from webscard.models import handle, session, operation
 
 from webscard.request import Request
 
-from webscard import implementations
+from webscard.implementations import chooser
 
 class WebSCard(object):
 
@@ -22,13 +22,14 @@ class WebSCard(object):
         self.config = config
         db_uri = self.config.getstring('db.uri', "sqlite:///:memory:")
         self.database_engine = create_engine(db_uri, convert_unicode=True)
+        dbsession.configure(bind=self.database_engine)
         if db_uri == "sqlite:///:memory:":
             print "init db"
             self.init_database()
-        dbsession.configure(bind=self.database_engine)
         self.secret_key = config.getstring('cookies.secret', 
                                            "".join([random.choice(string.letters)
                                                     for i in range(20)]))
+        self.implchooser = chooser.Chooser()
 
     def __call__(self, environ, start_response):
         local.application = self
