@@ -29,7 +29,7 @@ class WebSCard(object):
         self.secret_key = config.getstring('cookies.secret', 
                                            "".join([random.choice(string.letters)
                                                     for i in range(20)]))
-        self.implchooser = chooser.Chooser()
+        chooser.initialize()
 
     def __call__(self, environ, start_response):
         local.application = self

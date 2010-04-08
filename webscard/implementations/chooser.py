@@ -1,109 +1,156 @@
 import imp, os, random
 
+from datetime import timedelta
+
 from webscard.utils import application
 
 from webscard.implementations.pyscard import Implementation
 
-TIMEOUT = 5 * 60 # 5 min.
+TIMEOUT = timedelta(0, 5* 60)
 
-class Implementation(object):
-    
-    def __init__(self, name):
-        self.name = name
-        self.cfg = application.config
-        self.mod = self.getmodulefor(name)
-        self.classname = cfg.getstring('%s.classname' % name, None)
-        if self.classname is None:
-            impl = self.mod
+
+def createimpl(name):
+    cfg = application.config
+    mod = getmodulefor(name)
+    classname = cfg.getstring('%s.classname' % name, None)
+    hard = cfg.getbool('%s.hardware' % name, False)
+    if classname is None:
+        impl = mod
+    else:
+        try:
+            impl = getattr(mod, classname)
+        except AttributeError:
+            raise AttributeError(
+                "class %s does not exist on the specified module" %
+                self.classname)
+        if hard:
+            # There is one class to manage everything
+            impl = impl()
+
+    res =  { 'name':name,
+             'impl':impl,
+             'hard': hard,
+             'class': bool(classname),
+             }
+
+    if hard:
+        try:
+            free = cfg.get(name, 'free')
+        except NoOptionError:
+            free = True
+        if isinstance(free, bool):
+            free = lambda: free
+        elif isinstance(free, str):
+            free = getattr(impl, free)
         else:
-            try:
-                impl = getattr(self.mod, self.classname)()
-            except AttributeError:
-                raise AttributeError(
-                    "class %s does not exist on the specified module" % 
-                    self.classname)
-        self.impl = impl
+            raise ValueError(free)
+        res['free'] = free
 
-    def loadpath(self):
-        """ taken from mercurial.extensions """
+        acquire = cfg.getstring('%s.acquire' % name, None)
+        if acquire is not None:
+            acquire = getattr(impl, acquire)
+        else:
+            acquire = lambda s: impl
+        res['acquire'] = acquire
+
+        release = cfg.get('%s.release' % name, None)
+        if release is not None:
+            release = getattr(impl, release)
+        else:
+            release = lambda s: s
+        res['release'] = release
+
+    return res
+
+def loadpath(path, name):
+    """ taken from mercurial.extensions """
+    cfg = application.config
+    name = name.replace('.','_')
+    path = os.path.expanduser(os.path.expandvars(path))
+    if os.path.isdir(path):
+        # module/__init__.py style
+        d, f = os.path.split(path.rstrip(os.path.sep))
+        fd, fpath, desc = imp.find_module(f, [d])
+        return imp.load_module(name, fd, fpath, desc)
+    else:
+        return imp.load_source(name, path)
+
+def getmodulefor(name):
+    cfg = application.config
+    path = cfg.getstring('%s.path' % name, None)
+    if path is not None:
         # generate a unique one to avoid clash
-        name = "webscard.%s" % self.name
-        name = name.replace('.','_')
-        self.path = os.path.expanduser(os.path.expandvars(self.path))
-        if os.path.isdir(self.path):
-            # module/__init__.py style
-            d, f = os.path.split(self.path.rstrip(os.path.sep))
-            fd, fpath, desc = imp.find_module(f, [d])
-            return imp.load_module(name, fd, fpath, desc)
-        else:
-            return imp.load_source(name, self.path)
+        mod = loadpath(path, "webscard.%s" % name)
+    else:
+        module = cfg.getstring('%s.module' % name, None)
+        if module is None:
+            raise ValueError(
+                '%s.module or %s.path config option missing'
+                % name)
+        mod = __import__(module)
+        components = module.split('.')
+        for comp in components[1:]:
+            mod = getattr(mod, comp)
+    print "mod is %s" % mod
+    return mod
 
-    def getmodulefor(self):
-        self.path = self.cfg.getstring('%s.path' % self.name, None)
-        if self.path is not None:
-            mod = self.loadpath()
-        else:
-            module = cfg.getstring('%s.module' % self.name, None)
-            if module is None:
-                if self.name == 'pyscard':
-                    module = 'smartcard.scard'
-                else:
-                    raise ValueError(
-                        '%s.module or %s.path config option missing' 
-                        % self.name)
-            mod = __import__(module)
-            components = module.split('.')
-            for comp in components[1:]:
-                mod = getattr(mod, comp)
-        print "mod is %s" % mod
-        self.mod = mod
+pool = []
+# map session to implementation and name
+map = {}
+def initialize():
+    cfg = application.config
+    impls = cfg.getstring('internal.implementations', 'pyscard')
+    impls = impls.split()
+    for implname in impls:
+        pool.append(createimpl(implname))
 
-    def release(self, session):
-        """ The sesion finished playing with his instance """
-        pass
 
-    def use(self, session):
-        """ We are going to be used by this session """
-        pass
-
-    def isfree(self):
-        """ If we can be used on one more session """
+def releaseoldestexpiredsession(name):
+    bad = None
+    badinactvity = TIMEOUT
+    for session_uid in map:
+        if map[session_uid]['name'] == name:
+            session = Session.query.get(session_uid)
+            inactivity = session.inactivity()
+            if inactivity > badinactivity:
+                bad = session_uid
+                badinactivity = inactivity
+    if bad is not None:
+        release(bad)
         return True
+    return False
 
-    def get(self, session):
-        return impl
 
-class Chooser(object):
-    
-    pool = []
-    # map session to implementation
-    map = {}
-    def __init__(self):
-        cfg = application.config
-        impls = cfg.getstring('internal.implementations', 'pyscard')
-        impls = impls.split()
-        for implname in impls:
-            self.pool.append(Implementation(implname))
-
-    def acquire(self, session):
-        free = []
-        for impl in pool:
-            if impl.isfree():
+def acquire(session):
+    free = []
+    for impl in pool:
+        if impl['hard']:
+            if impl['free']():
                 free.append(impl)
-        if len(free) != 0:
-            impl = random.choice(free)
-        impinst = impl.use(session)
-        self.map[session.uid] = implinst
-        return impl
+            else:
+                releaseoldestexpiredsession(impl['name'])
+    
+    if len(free) != 0:
+        impl = random.choice(free)
 
-    def get(self, session):
-        return self.map[session.uid].get(session)
+    if impl['hard']:
+        implinst = impl['acquire'](session)
+    else:
+        if impl['class']:
+            implinst = imp['impl']()
+        else:
+            implinst = impl['impl']
+    map[session.uid]  = {}
+    map[session.uid]['inst'] = implinst
+    map[session.uid]['name'] = impl['name']
+    return implinst
 
-    def release(self, session):
-        impl = self.map[session.uid]
-        del self.map[session.uid]
-        impl.release()
+def get(session):
+    return map[session.uid]['inst']
 
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+def release(session):
+    impl = map[session.uid]
+    del map[session.uid]
+    for i in pool:
+        if i['name'] == impl['name']:
+            i['release'](session)

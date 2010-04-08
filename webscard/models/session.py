@@ -7,6 +7,7 @@ from werkzeug import cached_property
 
 from webscard.utils import dbsession, metadata, application
 from webscard.models.handle import Context, Handle
+from webscard.implementations import chooser
 
 from smartcard.scard import SCARD_E_INVALID_HANDLE, SCARD_E_INVALID_PARAMETER
 
@@ -24,17 +25,12 @@ class Session(object):
     impl = None
 
     def __init__(self, request):
-        self.impl = application.implchooser.acquire(self)
         self.user_agent = request.headers.get('User-Agent')
         self.remote_addr = request.remote_addr
         self.firstactivity = datetime.now()
         dbsession.add(self)
         dbsession.flush() # that will assign us a uid
-        self.store()
-
-    def store(self):
-        assert self.uid, "No uid on the session, no one flushed !"
-        application.implchooser.setimpl(self, self.impl)
+        self.impl = chooser.acquire(self)
 
     def validatecontext(self, context):
         hContext = Context.query.get(context)
@@ -60,13 +56,16 @@ class Session(object):
 
     @cached_property
     def implementation(self):
-        return application.implchooser.getimpl(self)
+        return chooser.get(self)
 
     def __repr__(self):
         return "<session %d>" % self.uid
 
     def update(self):
         self.lastactivity = datetime.now()
+
+    def inactivity(self):
+        return datetime.now() - self.lastactivity
 
 mapper(Session, session_table, properties={
     'contexts': relation(Context, backref='session')

@@ -4,6 +4,27 @@ class Config(SafeConfigParser):
     def __init__(self, file):
         SafeConfigParser.__init__(self)
         self.read(file)
+        self.addhardcodedvalues()
+
+    def addhardcodedvalues(self):
+        """ Those are not for default values, but for constant values """
+        try:
+            self.add_section('pyscard')
+        except DuplicateSectionError:
+            pass
+        self.set('pyscard', 'module', 'smartcard.scard')
+        self.set('pyscard', 'hard', "yes")
+
+        try:
+            self.add_section('clusterscard')
+        except DuplicateSectionError:
+            pass
+        self.set('clusterscard', 'module', 'webscard.implemntations.clusterscard')
+        self.set('clusterscard', 'hard', "yes")
+        self.set('clusterscard', 'free', 'isfree')
+        self.set('clusterscard', 'acquire', 'acquire')
+        self.set('clusterscard', 'release', 'release')
+        
 
     def getstring(self, item, default=""):
         section, option = item.split('.')

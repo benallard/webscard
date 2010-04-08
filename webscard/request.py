@@ -14,9 +14,8 @@ class Request(BaseRequest):
     def client_session(self):
         data = self.cookies.get(cookiename)
         if not data:
-            return SecureCookie(secret_key=application.secret_key)
-        else:
             print "No cookie"
+            return SecureCookie(secret_key=application.secret_key)
         return SecureCookie.unserialize(data, application.secret_key)
 
     def getsession(self):
