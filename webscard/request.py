@@ -35,7 +35,6 @@ class Request(BaseRequest):
 
     def storesession(self, response):
         if self.newsession:
-            self.session.store()
             self.client_session['sid'] = self.session.uid
             session_data = self.client_session.serialize()
             response.set_cookie(cookiename, session_data)

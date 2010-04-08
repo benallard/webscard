@@ -24,11 +24,13 @@ class Session(object):
     impl = None
 
     def __init__(self, request):
-        self.impl = application.implchooser.getone(self)
+        self.impl = application.implchooser.acquire(self)
         self.user_agent = request.headers.get('User-Agent')
         self.remote_addr = request.remote_addr
         self.firstactivity = datetime.now()
         dbsession.add(self)
+        dbsession.flush() # that will assign us a uid
+        self.store()
 
     def store(self):
         assert self.uid, "No uid on the session, no one flushed !"

@@ -1,8 +1,11 @@
-from webscard.implementations import pyscard
+""" 
+We limit pyscard to a number of reader per session
+So that one session
+"""
+
+from smartcard import scard as pyscard
 
 class Implementation(pyscard.Implementation):
-
-    super = pyscard.Implementation
 
     taken = {}
 
@@ -10,8 +13,8 @@ class Implementation(pyscard.Implementation):
         self.limit = readerpercontext
 
     def SCardListReaders(self, hContext, ReaderGroup):
-        hresult, readers = self.super.SCardListReaders(self, hContext, ReaderGroup)
-        if hresult == 0:
+        hresult, readers = pyscard.SCardListReaders(self, hContext, ReaderGroup)
+        if hresult == pyscard.SCARD_SUCCESS:
             contextreaders = []
             for reader in readers:
                 if reader not in self.taken:
@@ -26,10 +29,15 @@ class Implementation(pyscard.Implementation):
         for reader in self.taken:
             if self.taken[reader] == hContext:
                 del self.taken[reader]
-        return self.super.SCardReleaseContext(self, hContext)
+        return pyscard.SCardReleaseContext(self, hContext)
 
     def SCardConnect(self, hContext, zreader, dwShared, dwProtocol):
         if not self.taken[zreader] == hContext:
             # Hep ! Reader does not exists
             zreader = "--%s--" % zreader
-        return self.super.SCardConnect(self, hContext, zreader, dwShared, dwProtocol)
+        return pyscard.SCardConnect(self, hContext, zreader, dwShared, dwProtocol)
+
+    def __getattr__(self, name):
+        return getattr(pyscard, name)
+
+    def release(self)
