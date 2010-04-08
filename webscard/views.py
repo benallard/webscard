@@ -62,10 +62,11 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
                     dwPreferredProtocol=dwPreferredProtocol)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
         hContext.val, szReader, dwSharedMode, dwPreferredProtocol)
-    logger.logoutput(hContext, hresult, hCard=hCard,
-                     dwActiveProtocol=dwActiveProtocol)
+    after = time.time()
     hCard = Handle(hCard, hContext)
-    dbsession.flush()
+    dbsession.flush() # to get an uid
+    logger.logoutput(hContext, hresult, hCard=hCard.uid,
+                     dwActiveProtocol=dwActiveProtocol, time=after)
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
 
