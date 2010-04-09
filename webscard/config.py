@@ -41,3 +41,11 @@ class Config(SafeConfigParser):
         except (NoSectionError, NoOptionError):
             val = default
         return val
+
+    def getinteger(self, item, default=0):
+        section, option = item.split('.')
+        try:
+            val = self.getint(section, option)
+        except (NoSectionError, NoOptionError):
+            val = default
+        return val
