@@ -4,10 +4,9 @@ from datetime import timedelta
 
 from webscard.utils import application
 
-from webscard.implementations.pyscard import Implementation
-
 TIMEOUT = timedelta(0, 5* 60)
 
+THRESHOLD = 20
 
 def createimpl(name):
     cfg = application.config
@@ -120,6 +119,15 @@ def releaseoldestexpiredsession(name):
         return True
     return False
 
+def cleanexpiredsoftsessions():
+    expired = []
+    for session_uid in map:
+        if not map[session_uid]['hard']:
+            session = Session.query.get(session_uid)
+            if session.inactivity() > TIMEOUT:
+                expired.append(session)
+    for session in expired:
+        release(session.uid)
 
 def acquire(session):
     free = []
@@ -131,9 +139,11 @@ def acquire(session):
                 if releaseoldestexpiredsession(impl['name']):
                     free.append(impl)
         else:
-            # next line is discutable
-            releaseoldestexpiredsession(impl['name']):
             free.append(impl)
+
+    
+    if len(map) > THRESHOLD:
+        cleanexpiredsoftsessions()
     
     if len(free) != 0:
         impl = random.choice(free)
