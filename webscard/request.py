@@ -50,7 +50,5 @@ class Request(BaseRequest):
         else:
             res = None
         if res is not None:
-            print "bad session"
             return render(self, res)
-        print "good session"
         return None

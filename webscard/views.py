@@ -23,7 +23,6 @@ def welcome(request):
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')
 def establishcontext(request, dwScope):
-    print "establishcontext"
     impl = request.implementation
 
     before = time.time() # we have to do it ourself as there is no handle before 

@@ -50,9 +50,7 @@ def createimpl(name):
         res['free'] = free
 
         acquire = cfg.getstring('%s.acquire' % name, None)
-        print acquire
         if acquire is not None:
-            print "acquire exists"
             acquire = getattr(impl, acquire)
         else:
             acquire = lambda s: impl
