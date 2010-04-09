@@ -128,7 +128,12 @@ def acquire(session):
             if impl['free']():
                 free.append(impl)
             else:
-                releaseoldestexpiredsession(impl['name'])
+                if releaseoldestexpiredsession(impl['name']):
+                    free.append(impl)
+        else:
+            # next line is discutable
+            releaseoldestexpiredsession(impl['name']):
+            free.append(impl)
     
     if len(free) != 0:
         impl = random.choice(free)
