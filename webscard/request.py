@@ -10,6 +10,10 @@ class Request(BaseRequest):
 
     newsession = False
 
+    def __init__(self, environ, **kw):
+        BaseRequest.__init__(self, environ, kw)
+        self.getsession()
+
     @cached_property
     def client_session(self):
         data = self.cookies.get(cookiename)

@@ -19,7 +19,7 @@ class Config(SafeConfigParser):
             self.add_section('clusterscard')
         except DuplicateSectionError:
             pass
-        self.set('clusterscard', 'module', 'webscard.implemntations.clusterscard')
+        self.set('clusterscard', 'module', 'webscard.implementations.clusterscard')
         self.set('clusterscard', 'hard', "yes")
         self.set('clusterscard', 'free', 'isfree')
         self.set('clusterscard', 'acquire', 'acquire')

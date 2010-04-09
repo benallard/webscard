@@ -1,5 +1,7 @@
 import imp, os, random
 
+import ConfigParser
+
 from datetime import timedelta
 
 from webscard.utils import application
@@ -10,9 +12,11 @@ THRESHOLD = 20
 
 def createimpl(name):
     cfg = application.config
+    if not cfg.has_section(name):
+        raise ValueError("section [%s] in the config file is missing" % name)
     mod = getmodulefor(name)
     classname = cfg.getstring('%s.classname' % name, None)
-    hard = cfg.getbool('%s.hardware' % name, False)
+    hard = cfg.getbool('%s.hard' % name, False)
     if classname is None:
         impl = mod
     else:
@@ -35,7 +39,7 @@ def createimpl(name):
     if hard:
         try:
             free = cfg.get(name, 'free')
-        except NoOptionError:
+        except ConfigParser.NoOptionError:
             free = True
         if isinstance(free, bool):
             free = lambda: free
@@ -46,13 +50,15 @@ def createimpl(name):
         res['free'] = free
 
         acquire = cfg.getstring('%s.acquire' % name, None)
+        print acquire
         if acquire is not None:
+            print "acquire exists"
             acquire = getattr(impl, acquire)
         else:
             acquire = lambda s: impl
         res['acquire'] = acquire
 
-        release = cfg.get('%s.release' % name, None)
+        release = cfg.getstring('%s.release' % name, None)
         if release is not None:
             release = getattr(impl, release)
         else:
@@ -85,7 +91,7 @@ def getmodulefor(name):
         if module is None:
             raise ValueError(
                 '%s.module or %s.path config option missing'
-                % name)
+                % (name, name))
         mod = __import__(module)
         components = module.split('.')
         for comp in components[1:]:

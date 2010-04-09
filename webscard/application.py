@@ -41,7 +41,6 @@ class WebSCard(object):
                                [dbsession.remove, local_manager.cleanup])
 
     def getresponse(self, request):
-        request.getsession()
         try:
             endpoint, values = local.url_adapter.match()
         except NotFound, e:
