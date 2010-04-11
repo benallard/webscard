@@ -15,10 +15,10 @@ from webscard.models.session import Session
 @expose('/')
 def welcome(request):
     sessions = dbsession.query(Session).all()
-    sids = []
+    ss = []
     for s in sessions:
-        sids.append(s.uid)
-    return render(request, {'msg':"Welcome to the universal SCard Web Proxy", 'sids': sids})
+        ss.append(s.asdict())
+    return render(request, {'msg':"Welcome to the universal SCard Web Proxy", 'sessions': ss})
 
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')

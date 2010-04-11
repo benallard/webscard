@@ -108,7 +108,7 @@ def initialize():
         pool.append(createimpl(implname))
 
 
-def releaseoldestexpiredsession(name):
+def releaseoldestexpiredsession(name, current):
     bad = None
     badinactvity = TIMEOUT
     for session_uid in map:
@@ -119,11 +119,11 @@ def releaseoldestexpiredsession(name):
                 bad = session_uid
                 badinactivity = inactivity
     if bad is not None:
-        release(bad)
+        release(bad, current)
         return True
     return False
 
-def cleanexpiredsoftsessions():
+def cleanexpiredsoftsessions(current):
     expired = []
     for session_uid in map:
         if not map[session_uid]['hard']:
@@ -131,7 +131,7 @@ def cleanexpiredsoftsessions():
             if session.inactivity() > TIMEOUT:
                 expired.append(session)
     for session in expired:
-        release(session.uid)
+        release(session, current)
 
 def acquire(session):
     free = []
@@ -140,14 +140,14 @@ def acquire(session):
             if impl['free']():
                 free.append(impl)
             else:
-                if releaseoldestexpiredsession(impl['name']):
+                if releaseoldestexpiredsession(impl['name'], session):
                     free.append(impl)
         else:
             free.append(impl)
 
     
     if len(map) > THRESHOLD:
-        cleanexpiredsoftsessions()
+        cleanexpiredsoftsessions(session)
     
     if len(free) != 0:
         impl = random.choice(free)
@@ -167,9 +167,10 @@ def acquire(session):
 def get(session):
     return map[session.uid]['inst']
 
-def release(session):
+def release(session, current):
     impl = map[session.uid]
     del map[session.uid]
+    session.closedbay = current
     for i in pool:
         if i['name'] == impl['name']:
             i['release'](session)

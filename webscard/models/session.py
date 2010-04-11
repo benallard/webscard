@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import Table, Column, Integer, String, Text, DateTime
-from sqlalchemy.orm import mapper, relation
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import mapper, relation, relationship, backref
 
 from werkzeug import cached_property
 
@@ -17,6 +17,7 @@ session_table = Table('sessions', metadata,
     Column('remote_addr', String(15)),
     Column('firstactivity', DateTime),
     Column('lastactivity', DateTime),
+    Column('closedby_uid', Integer, ForeignKey('sessions.uid')),
 )
 
 class Session(object):
@@ -28,6 +29,7 @@ class Session(object):
         self.user_agent = request.headers.get('User-Agent')
         self.remote_addr = request.remote_addr
         self.firstactivity = datetime.now()
+        self.update()
         dbsession.add(self)
         dbsession.flush() # that will assign us a uid
         self.impl = chooser.acquire(self)
@@ -59,7 +61,8 @@ class Session(object):
         return chooser.get(self)
 
     def __repr__(self):
-        return "<session %d>" % self.uid
+        return "<session #%d, %d contexts, inactive for %s>" % (
+            self.uid, len(self.contexts), self.inactivity())
 
     def update(self):
         self.lastactivity = datetime.now()
@@ -67,6 +70,19 @@ class Session(object):
     def inactivity(self):
         return datetime.now() - self.lastactivity
 
+    def asdict(self):
+        res = {}
+        res['uid'] = self.uid
+        res['user_agent'] = self.user_agent
+        res['remote_addr'] = self.remote_addr
+        res['firstactivity'] = str(self.firstactivity)
+        res['inactivity'] = str(self.inactivity())
+        if self.closedby_uid is not None:
+            res['closed_by'] = self.closedby_uid
+        return res
+
 mapper(Session, session_table, properties={
-    'contexts': relation(Context, backref='session')
+    'contexts': relation(Context, backref='session'),
+    # adjency list pattern
+    'hasclosed': relation(Session, backref=backref('closedby', remote_side=[session_table.c.uid])),
 })
