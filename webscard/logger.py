@@ -1,15 +1,17 @@
-import time
+import datetime
 import inspect
 
 from webscard.models import operation
-
 
 record = {}
 
 def loginput(hContext, **params):
      if 'time' not in params:
-        params['time'] = time.time()
+        params['time'] = datetime.now()
+     # get the caller name from the stack
      function = inspect.stack()[1][3]
+     opclass = getclassfor(function)
+     op = opclass(context = hContext, **params)
      try:
          handlerec = record[hContext.uid]
      except KeyError:
@@ -32,7 +34,7 @@ def logoutput(hContext, hresult, **params):
 
     current = current[function]
     current['output'] = params
-    current['duration'] = current['output']['time'] - current['input']['time']
+    current['duration'] = str(current['output']['time'] - current['input']['time'])
 
 classdict = {
     'establishcontext': operation.EstablishContext,

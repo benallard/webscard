@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 try:
     import simplejson as json
 except:
@@ -25,9 +25,9 @@ def welcome(request):
 def establishcontext(request, dwScope):
     impl = request.implementation
 
-    before = time.time() # we have to do it ourself as there is no handle before 
+    before = datetime.now() # we have to do it ourself as there is no handle before
     hresult, hContext = impl.SCardEstablishContext(dwScope)
-    after = time.time()
+    after = datetime.now()
 
     dbsession.flush() # to get a session_uid
     hContext = Context(request.session, hContext, impl)
@@ -61,7 +61,7 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
                     dwPreferredProtocol=dwPreferredProtocol)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
         hContext.val, szReader, dwSharedMode, dwPreferredProtocol)
-    after = time.time()
+    after = datetime.now()
     hCard = Handle(hCard, hContext)
     dbsession.flush() # to get an uid
     logger.logoutput(hContext, hresult, hCard=hCard.uid,

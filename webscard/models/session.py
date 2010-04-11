@@ -77,6 +77,9 @@ class Session(object):
         res['remote_addr'] = self.remote_addr
         res['firstactivity'] = str(self.firstactivity)
         res['inactivity'] = str(self.inactivity())
+        res['contexts'] = []
+        for c in self.contexts:
+            res['contexts'].append(c.uid)
         if self.closedby_uid is not None:
             res['closed_by'] = self.closedby_uid
         return res

@@ -16,7 +16,13 @@ operation_table = Table('operations', metadata,
 )
 
 class Operation(object):
-    pass
+    query = dbsession.query_property()
+
+    def __init__(self, **params):
+        self.initiated = params.get('time')
+        self.context = params['context']
+        dbsession.add(self)
+
 mapper(Operation, operation_table, 
     polymorphic_on=operation_table.c.type, polymorphic_identity='operation',
     properties = {'context': relation(Context, backref='operations')},
