@@ -142,8 +142,9 @@ def log(request, logcontext):
 @expose('/log/<int:sid>')
 def logforsession(request, sid):
     if sid is None:
-        sid = session.uid
-    logs = {}
+        sid = request.session.uid
+    sess = Session.query.get(sid)
+    logs = sess.asdict()
     for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
         logs[ctx.uid] = logger.getlogsfor(ctx.uid)
     return render(request, logs)
