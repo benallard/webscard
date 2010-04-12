@@ -47,6 +47,26 @@ def listreaders(request, context, mszGroups):
     logger.logoutput(hContext, hresult, mszReaders=readers)
     return render(request, {"hresult":hresult, "mszReaders":readers})
 
+@expose('/<int:context>/GetStatusChange/<rgReaderStates>', defaults={'dwTimeout':60000})
+@expose('/<int:context>/GetStatusChange/<int:dwTimeout>/<rgReaderStates>')
+def getstatuschange(request, context, dwTimeout, rgReaderStates):
+    hContext = Context.query.get(context)
+    impl = request.implementation
+    rgReaderStates = json.loads(rgReaderStates)
+    logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=rgReaderStates)
+    hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, rgReaderStates )
+    logger.logoutput(hContext, hresult, rgReaderStates=states)
+    return render(request, {"hresult":hresult, "rgReaderStates":states})
+
+# I'm sceptic about this one ...
+@expose('/<int:context>/FreeMemory/<int:pvMem>')
+def freememory(request, context, pvMem):
+    hContext = Context.query.get(context)
+    impl = request.implementation
+    logger.loginput(hContext, pvMem=pvMem)
+    hresult, readers = impl.SCardFreeMemory( hContext.val, pvMem )
+    logger.logoutput(hContext, hresult)
+    return render(request, {"hresult":hresult})
 
 @expose('/<int:context>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocol': 3})
@@ -124,6 +144,16 @@ def disconnect(request, card, dwDisposition):
     logger.logoutput(hContext, hresult)
     return render( request, {"hresult": hresult})
 
+@expose('/<int:context>/Cancel')
+def cancel(request, context):
+    hContext = Context.query.get(context)
+    impl = request.implementation
+    logger.loginput(hContext)
+    hresult = impl.SCardCancel(hContext.val)
+    logger.logoutput(hContext, hresult)
+    return render(request, {"hresult":hresult})
+    
+
 @expose('/<int:context>/ReleaseContext')
 def releasecontext(request, context):
     hContext = Context.query.get(context)
@@ -132,7 +162,7 @@ def releasecontext(request, context):
     hresult = impl.SCardReleaseContext(hContext.val)
     logger.logoutput(hContext, hresult)
     return render(request, {"hresult":hresult})
-        
+
 # name it differenty to avoid it being checked by the validator
 @expose('/<int:logcontext>')
 def log(request, logcontext):
