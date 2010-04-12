@@ -9,7 +9,7 @@ from werkzeug.exceptions import NotFound
 from webscard.utils import dbsession, local, local_manager, metadata ,url_map, Exception2JSON, render
 from webscard import views
 
-from webscard.models import handle, session, operation
+from webscard.models import handle, session, operation, apdu
 
 from webscard.request import Request
 

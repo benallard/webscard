@@ -32,8 +32,8 @@ def establishcontext(request, dwScope):
     dbsession.flush() # to get a session_uid
     hContext = Context(request.session, hContext, impl)
     dbsession.flush() # to get a context_uid
-    logger.loginput(hContext, dwScope=dwScope, time=before)
-    logger.logoutput(hContext, hresult, time=after)
+    opuid = logger.loginput(hContext, dwScope=dwScope, time=before)
+    logger.logoutput(opuid, hresult, time=after)
     return render(request, {"hresult":hresult, "hcontext":hContext.uid})
 
 @expose('/<int:context>/ListReaders', defaults={'mszGroups': "[]"})
@@ -42,9 +42,9 @@ def listreaders(request, context, mszGroups):
     hContext = Context.query.get(context)
     impl = request.implementation
     mszGroups = json.loads(mszGroups)
-    logger.loginput(hContext, readergroup=mszGroups)
+    opuid = logger.loginput(hContext, readergroup=mszGroups)
     hresult, readers = impl.SCardListReaders( hContext.val, mszGroups )
-    logger.logoutput(hContext, hresult, mszReaders=readers)
+    logger.logoutput(opuid, hresult, mszReaders=readers)
     return render(request, {"hresult":hresult, "mszReaders":readers})
 
 @expose('/<int:context>/GetStatusChange/<rgReaderStates>', defaults={'dwTimeout':60000})
@@ -55,21 +55,19 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
     rgReaderStates = json.loads(rgReaderStates)
     ReaderStates = []
     for readerstate in rgReaderStates:
-        res = ()
+        name = str(readerstate[0])
+        event = readerstate[1]
+        res = name, event,
         try:
-            name = str(readerstate[0])
-            res = name,
-            event = readerstate[1]
-            res = name, event,
             atr = readerstate[2]
             res = name, event, atr
         except IndexError:
             pass
         ReaderStates.append(res)
-    logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
+    opuid = logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
     print json.dumps(ReaderStates)
     hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, ReaderStates )
-    logger.logoutput(hContext, hresult, rgReaderStates=states)
+    logger.logoutput(opuid, hresult, rgReaderStates=states)
     return render(request, {"hresult":hresult, "rgReaderStates":states})
 
 # I'm sceptic about this one ...
@@ -77,9 +75,9 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
 def freememory(request, context, pvMem):
     hContext = Context.query.get(context)
     impl = request.implementation
-    logger.loginput(hContext, pvMem=pvMem)
+    opuid = logger.loginput(hContext, pvMem=pvMem)
     hresult, readers = impl.SCardFreeMemory( hContext.val, pvMem )
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render(request, {"hresult":hresult})
 
 @expose('/<int:context>/Connect/<szReader>',
@@ -91,14 +89,14 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
     hContext = Context.query.get(context)
     impl = request.implementation
     szReader = str(szReader)
-    logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
+    opuid = logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
                     dwPreferredProtocol=dwPreferredProtocol)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
         hContext.val, szReader, dwSharedMode, dwPreferredProtocol)
     after = datetime.now()
     hCard = Handle(hCard, hContext)
     dbsession.flush() # to get an uid
-    logger.logoutput(hContext, hresult, hCard=hCard.uid,
+    logger.logoutput(opuid, hresult, hCard=hCard.uid,
                      dwActiveProtocol=dwActiveProtocol, time=after)
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
@@ -107,9 +105,9 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
 def status(request, card):
     hCard = Handle.query.get(card)
     impl = request.implementation
-    logger.loginput(hCard.context)
+    opuid = logger.loginput(hCard.context)
     hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard.val)
-    logger.logoutput(hCard.context, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
+    logger.logoutput(opuid, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
     return render(request, {"hresult":hresult, "szReaderName":readername, 
         "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
 
@@ -118,9 +116,9 @@ def begintransaction(request, card):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    logger.loginput(hContext)
+    opuid = logger.loginput(hContext)
     hresult = impl.SCardBeginTransaction(hCard.val)
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render(request, {'hresult': hresult})
 
 @expose('/<int:card>/EndTransaction', defaults={'dwDisposition':0})
@@ -129,9 +127,9 @@ def endtransaction(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    logger.loginput(hContext, dwDisposition=dwDisposition)
+    opuid = logger.loginput(hContext, dwDisposition=dwDisposition)
     hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render(request, {'hresult': hresult})
 
 
@@ -142,9 +140,9 @@ def transmit(request, card, dwProtocol, apdu):
     hContext = hCard.context
     impl = request.implementation
     apdu = json.loads(apdu)
-    logger.loginput(hContext, dwProtocol=dwProtocol, apdu=apdu)
+    opuid = logger.loginput(hContext, dwProtocol=dwProtocol, apdu=apdu)
     hresult, response = impl.SCardTransmit(hCard.val, dwProtocol, apdu)
-    logger.logoutput(hContext, hresult, response=response)
+    logger.logoutput(opuid, hresult, response=response)
     return render(request, {"hresult": hresult, "response": response})
 
 @expose('/<int:card>/Disconnect', defaults={'dwDisposition': 0})
@@ -153,18 +151,18 @@ def disconnect(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    logger.loginput(hContext, dwDisposition=dwDisposition)
+    opuid = logger.loginput(hContext, dwDisposition=dwDisposition)
     hresult = impl.SCardDisconnect(hCard.val, dwDisposition)
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render( request, {"hresult": hresult})
 
 @expose('/<int:context>/Cancel')
 def cancel(request, context):
     hContext = Context.query.get(context)
     impl = request.implementation
-    logger.loginput(hContext)
+    opuid = logger.loginput(hContext)
     hresult = impl.SCardCancel(hContext.val)
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render(request, {"hresult":hresult})
     
 
@@ -172,9 +170,9 @@ def cancel(request, context):
 def releasecontext(request, context):
     hContext = Context.query.get(context)
     impl = request.implementation
-    logger.loginput(hContext)
+    opuid = logger.loginput(hContext)
     hresult = impl.SCardReleaseContext(hContext.val)
-    logger.logoutput(hContext, hresult)
+    logger.logoutput(opuid, hresult)
     return render(request, {"hresult":hresult})
 
 # name it differenty to avoid it being checked by the validator
@@ -182,6 +180,7 @@ def releasecontext(request, context):
 def log(request, logcontext):
     return render(request, logger.getlogsfor(logcontext))
 
+# next one is more detailed that the db one ... but already deprecated
 @expose('/log', defaults={'sid':None})
 @expose('/log/<int:sid>')
 def logforsession(request, sid):
@@ -192,3 +191,15 @@ def logforsession(request, sid):
     for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
         logs[ctx.uid] = logger.getlogsfor(ctx.uid)
     return render(request, logs)
+
+@expose('/logdb', defaults={'sid':None})
+@expose('/logdb/<int:sid>')
+def logforsessionfromdatabase(request, sid):
+    if sid is None:
+        sid = request.session.uid
+    sess = Session.query.get(sid)
+    logs = sess.asdict()
+    for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
+        logs[ctx.uid] = logger.getlogsfromdbfor(ctx)
+    return render(request, logs)
+
