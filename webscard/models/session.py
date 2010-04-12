@@ -36,6 +36,9 @@ class Session(object):
 
     def validatecontext(self, context):
         hContext = Context.query.get(context)
+        if hContext is None:
+            return {'message': "Context %d does not exists" % context,
+                    'hresult': SCARD_E_INVALID_PARAMETER}
         if hContext not in self.contexts:
             return {'message': "Current session #%d is not #%d where the" \
                         " context has been aquired" % (self.uid,
@@ -44,14 +47,17 @@ class Session(object):
         return None
 
     def validatehandle(self, handle):
-        handle = Handle.query.get(handle)
+        hHandle = Handle.query.get(handle)
+        if hHandle is None:
+            return {'message': "Handle %d never seen" % handle,
+                    'hresult': SCARD_E_INVALID_HANDLE}
         res = False
         for hContext in self.contexts:
-            if handle in hContext.handles:
+            if hHandle in hContext.handles:
                 res = True
         if not res:
             return {'message': "Current handle #%d does not belong to any " \
-                        "context opened in this session #%d" % (handle.uid,
+                        "context opened in this session #%d" % (hHandle.uid,
                                                                 self.uid),
                     'hresult': SCARD_E_INVALID_HANDLE}
         return None

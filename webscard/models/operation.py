@@ -31,7 +31,7 @@ class Operation(object):
         self.result = hresult
         duration = params.get('time') - self.initiated
         self.duration = duration.days * 86400 + \
-            duration.seconds + duration.microseconds * 10e-6
+            duration.seconds + duration.microseconds * 1e-6
 
     def asdict(self):
         res = {}
@@ -55,7 +55,7 @@ transmit_table = Table('transmits', metadata,
 class Transmit(Operation):
     def __init__(self, name, context, **params):
         Operation.__init__(self, name, context, **params)
-        self.apdu = APDU(params['apdu'])
+        self.apdu = APDU(self, params['apdu'])
         self.protocol = params['dwProtocol']
 
     def performed(self, hresult, **params):

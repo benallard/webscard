@@ -41,13 +41,13 @@ def logoutput(opuid, hresult, **params):
 
     current = current[function]
     current['output'] = params
-    current['duration'] = str(current['output']['time'] - current['input']['time'])
+    current['duration'] = current['output']['time']+ " - " +current['input']['time'] + "(ask the db)"
 
 
 def getlogsfor(context):
     return record[context]
 
-def getlogsforfromdb(context):
+def getlogsfromdbfor(context):
      log = []
      for op in context.operations:
           log.append(op.asdict())

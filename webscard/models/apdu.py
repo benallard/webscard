@@ -19,8 +19,7 @@ def stringify(bytes):
         if len(b) == 1:
             b = '0' + b
         return b
-    map(hexlikeiwant, bytes)
-    return ' '.join(bytes)
+    return ' '.join(map(hexlikeiwant, bytes))
 
 apdu_table = Table('apdus', metadata,
     Column("uid", Integer, primary_key=True),
