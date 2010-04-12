@@ -53,8 +53,22 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
     hContext = Context.query.get(context)
     impl = request.implementation
     rgReaderStates = json.loads(rgReaderStates)
-    logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=rgReaderStates)
-    hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, rgReaderStates )
+    ReaderStates = []
+    for readerstate in rgReaderStates:
+        res = ()
+        try:
+            name = str(readerstate[0])
+            res = name,
+            event = readerstate[1]
+            res = name, event,
+            atr = readerstate[2]
+            res = name, event, atr
+        except IndexError:
+            pass
+        ReaderStates.append(res)
+    logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
+    print json.dumps(ReaderStates)
+    hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, ReaderStates )
     logger.logoutput(hContext, hresult, rgReaderStates=states)
     return render(request, {"hresult":hresult, "rgReaderStates":states})
 

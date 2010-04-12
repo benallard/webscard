@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import inspect
 
 from webscard.models import operation
@@ -20,7 +20,7 @@ def loginput(hContext, **params):
 
 def logoutput(hContext, hresult, **params):
     if 'time' not in params:
-        params['time'] = time.time()
+        params['time'] = datetime.now()
     function = inspect.stack()[1][3]
     params['hresult'] = hresult
 
