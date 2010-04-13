@@ -29,14 +29,18 @@ class WebSCardTrayIcon(QSystemTrayIcon):
         self.menu = QMenu(QString("WebScard Menu"))
         self.setContextMenu(self.menu)
 
+        # -- reload
+
+        # -- configure with GUI
+
+        # -- initdb
+
         action = QAction(QString(u'&Quit'), self)
-        action.setShortcut(Qt.CTRL + Qt.Key_Q)
         action.setToolTip(u'Quit everything')
         action.triggered.connect(self.on_quit)
         self.menu.addAction(action)
 
-        self.setToolTip(QString(u'Click this icon to interact with'
-                                u' WebSCard.'))
+        self.setToolTip(QString(u'WebSCard: Smart card WSGI server'))
 
         self.webserverthread = WebServerThread(config)
         self.webserverthread.start()

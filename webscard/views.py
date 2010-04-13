@@ -187,9 +187,12 @@ def logforsession(request, sid):
     if sid is None:
         sid = request.session.uid
     sess = Session.query.get(sid)
-    logs = sess.asdict()
-    for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
-        logs[ctx.uid] = logger.getlogsfor(ctx.uid)
+    if sess is not None:
+        logs = sess.asdict()
+        for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
+            logs[ctx.uid] = logger.getlogsfor(ctx.uid)
+    else:
+        logs = {0:"Wrong session id"}
     return render(request, logs)
 
 @expose('/logdb', defaults={'sid':None})
@@ -198,8 +201,11 @@ def logforsessionfromdatabase(request, sid):
     if sid is None:
         sid = request.session.uid
     sess = Session.query.get(sid)
-    logs = sess.asdict()
-    for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
-        logs[ctx.uid] = logger.getlogsfromdbfor(ctx)
+    if sess is not None:
+        logs = sess.asdict()
+        for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
+            logs[ctx.uid] = logger.getlogsfromdbfor(ctx)
+    else:
+        logs = {0:"Wrong session id"}
     return render(request, logs)
 
