@@ -7,7 +7,7 @@ from werkzeug.exceptions import NotFound
 
 
 from webscard.utils import dbsession, local, local_manager, metadata ,url_map, Exception2JSON, render
-from webscard import views
+from webscard import views, bonjour
 
 from webscard.models import handle, session, operation, apdu
 
@@ -30,6 +30,7 @@ class WebSCard(object):
                                            "".join([random.choice(string.letters)
                                                     for i in range(20)]))
         chooser.initialize()
+        bonjour.register(config.getinteger('web.port', 3333))
 
     def __call__(self, environ, start_response):
         local.application = self
