@@ -5,7 +5,7 @@ except:
     import json
 
 
-from webscard import logger
+from webscard import logger, soap
 
 from webscard.utils import expose, render, dbsession
 
@@ -114,8 +114,7 @@ def control(request, card, dwControlCode, inbuffer):
     hresult, response = impl.SCardControl(hCard.val, dwControlCode, inbuffer)
     logger.logoutput(opuid, hresult, outbuffer=response)
     return render(request, {"hresult": hresult, "outbuffer": response})
-    
-    
+
 
 @expose('/<int:card>/Status')
 def status(request, card):
@@ -127,6 +126,7 @@ def status(request, card):
     return render(request, {"hresult":hresult, "szReaderName":readername, 
         "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
 
+
 @expose('/<int:card>/BeginTransaction')
 def begintransaction(request, card):
     hCard = Handle.query.get(card)
@@ -136,6 +136,7 @@ def begintransaction(request, card):
     hresult = impl.SCardBeginTransaction(hCard.val)
     logger.logoutput(opuid, hresult)
     return render(request, {'hresult': hresult})
+
 
 @expose('/<int:card>/EndTransaction', defaults={'dwDisposition':0})
 @expose('/<int:card>/EndTransaction/<int:dwDisposition>')
@@ -190,6 +191,11 @@ def releasecontext(request, context):
     hresult = impl.SCardReleaseContext(hContext.val)
     logger.logoutput(opuid, hresult)
     return render(request, {"hresult":hresult})
+
+# our SOAP interface
+@expose('/soap/v1')
+def soapv1(request):
+    return soap.v1(request)
 
 # name it differenty to avoid it being checked by the validator
 @expose('/<int:logcontext>')

@@ -131,6 +131,16 @@ def cleanexpiredsoftsessions(current):
     for session in expired:
         release(session, current)
 
+def instanciateimpl(impl, session):
+    if impl['hard']:
+        implinst = impl['acquire'](session)
+    else:
+        if impl['class']:
+            implinst = imp['impl']()
+        else:
+            implinst = impl['impl']
+    return implinst
+
 def acquire(session):
     free = []
     for impl in pool:
@@ -150,13 +160,7 @@ def acquire(session):
     if len(free) != 0:
         impl = random.choice(free)
 
-    if impl['hard']:
-        implinst = impl['acquire'](session)
-    else:
-        if impl['class']:
-            implinst = imp['impl']()
-        else:
-            implinst = impl['impl']
+    implinst = instanciateimpl(impl, session)
     map[session.uid]  = {}
     map[session.uid]['inst'] = implinst
     map[session.uid]['name'] = impl['name']
@@ -168,7 +172,7 @@ def get(session):
 def release(session, current):
     impl = map[session.uid]
     del map[session.uid]
-    session.closedbay = current
+    session.closedby = current
     for i in pool:
         if i['name'] == impl['name']:
             i['release'](session)

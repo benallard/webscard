@@ -1,3 +1,5 @@
+import elementtree.ElementTree as ET
+
 from werkzeug import BaseRequest, cached_property
 from werkzeug.contrib.securecookie import SecureCookie
 
@@ -7,6 +9,8 @@ from webscard.models.session import Session
 cookiename = 'session_data'
 
 class Request(BaseRequest):
+
+    max_content_length = 1024 * 1024 # 1 MB
 
     newsession = False
 
@@ -52,3 +56,22 @@ class Request(BaseRequest):
         if res is not None:
             return render(self, res)
         return None
+
+    @cached_property
+    def xmlroot(self):
+        if application.config.getbool('internal.debug', False):
+             tree = ET.ElementTree(file=FileObj('<root><operation name="establishcontext" /><operation name="connect" readername="OmniKey CardMan 6121 00 00" /><operation name="transmit"><cmd>0</cmd><cmd>164</cmd><cmd>4</cmd><cmd>0</cmd><cmd>8</cmd><cmd>160</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd><cmd>3</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd></operation><operation name="transmit"><cmd>128</cmd><cmd>202</cmd><cmd>159</cmd><cmd>127</cmd><cmd>0</cmd></operation><operation name="disconnect" /><operation name="releasecontext" /></root>'))
+             return tree.getroot()
+        if self.headers.get('content-type') == 'application/soap+xml':
+            tree = ET.ElementTree(file=FileObj(self.data))
+            return tree.getroot()
+       
+
+class FileObj(object):
+    def __init__(self, data):
+        self.data = data
+
+    index = 0
+    def read(self, size):
+        self.index += size
+        return self.data[self.index-size:self.index]
