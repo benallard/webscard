@@ -30,7 +30,7 @@ class WebSCard(object):
                                            "".join([random.choice(string.letters)
                                                     for i in range(20)]))
         chooser.initialize()
-        bonjour.register(config.getinteger('web.port', 3333))
+        bonjour.register(config.getport(), config.getimplementations())
 
     def __call__(self, environ, start_response):
         local.application = self

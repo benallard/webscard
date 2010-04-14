@@ -101,9 +101,7 @@ pool = []
 # map session to implementation and name
 map = {}
 def initialize():
-    cfg = application.config
-    impls = cfg.getstring('internal.implementations', 'pyscard')
-    impls = impls.split()
+    impls =  application.config.getimplementations()
     for implname in impls:
         pool.append(createimpl(implname))
 

@@ -17,17 +17,22 @@ def _register_callback(sdRef, flags, errorCode, name, regtype, domain):
     else:
         print "Error while registrating : %d" % errorCode
 
-def register(port):
+ns = lambda s: "%c%s" % (len(s), s)
+
+def register(port, implementations):
+    txt = ns("txtvers=1")
+    txt += ns("protovers=1")
+    for imp in implementations:
+        txt += ns(imp)
     for i in range(len(regtype)):
         sdRef.append(pybonjour.DNSServiceRegister(
                 name = name,
                 regtype = "_%s._tcp" % regtype[i],
                 port = port,
-                callBack = _register_callback))
+                callBack = _register_callback,
+                txtRecord = txt))
 
-        ready, _dummy1, _dummy2 = select.select([sdRef[i]], [], [])
-        if sdRef[i] in ready:
-            pybonjour.DNSServiceProcessResult(sdRef[i])
+        pybonjour.DNSServiceProcessResult(sdRef[i])
 
 # Hmm, that one is tricky as anyway, they get cleaned by the garbage collector ...
 def finalize():

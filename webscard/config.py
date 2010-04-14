@@ -5,6 +5,7 @@ class Config(SafeConfigParser):
         SafeConfigParser.__init__(self)
         self.read(file)
         self.addhardcodedvalues()
+        self.port = None
 
     def addhardcodedvalues(self):
         """ Those are not for default values, but for constant values """
@@ -49,3 +50,21 @@ class Config(SafeConfigParser):
         except (NoSectionError, NoOptionError):
             val = default
         return val
+
+    # And finally, functions that really make sense in our context
+    def getimplementations(self):
+        impls = self.getstring('internal.implementations', 'pyscard')
+        return impls.split()
+
+    def gethost(self):
+        return self.getstring('web.host', '0.0.0.0')
+
+    def getport(self):
+        if self.port is not None:
+            return self.port
+        if self.getbool('web.randomport', False):
+            # Let's pray the port will indeed be free ...
+            self.port = random.randint(49152, 65535)
+        else:
+            self.port = self.getinteger('web.port', 3333)
+        return self.port

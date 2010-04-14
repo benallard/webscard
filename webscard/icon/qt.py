@@ -14,11 +14,12 @@ class WebServerThread(QThread):
         QThread.__init__(self)
         self.config = config
         self.wscard = WebSCard(config)
+        # One might want to wrap it in a static middleware instead of that one
         self.app = werkzeug._easteregg(self.wscard)
 
     def run(self):
-        run_simple(self.config.getstring('web.host', '0.0.0.0'),
-                   self.config.getinteger('web.port', 3333),
+        run_simple(self.config.gethost()
+                   self.config.getport(),
                    self.app)
         
 

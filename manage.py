@@ -16,8 +16,8 @@ def make_shell():
     return locals()
 
 action_runserver = script.make_runserver(
-    make_app, hostname=config.getstring('web.host', '0.0.0.0'), 
-    port=config.getinteger('web.port', 3333), 
+    make_app, hostname=config.gethost(),
+    port=config.getport(),
     use_reloader=True, extra_files=CONFIG_FILE, use_debugger=True)
 action_initdb = lambda: make_app().init_database()
 action_shell = script.make_shell(make_shell)
