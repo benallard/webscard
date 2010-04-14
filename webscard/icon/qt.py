@@ -13,8 +13,8 @@ class WebServerThread(QThread):
     def __init__(self, config):
         QThread.__init__(self)
         self.config = config
-        wscard = WebSCard(config)
-        self.app = werkzeug._easteregg(wscard)
+        self.wscard = WebSCard(config)
+        self.app = werkzeug._easteregg(self.wscard)
 
     def run(self):
         run_simple(self.config.getstring('web.host', '0.0.0.0'),
@@ -34,8 +34,13 @@ class WebSCardTrayIcon(QSystemTrayIcon):
         # -- configure with GUI
 
         # -- initdb
+        action = QAction(QString(u'Init db'), self)
+        action.setToolTip(u'Initialize the database where is is configured')
+        action.triggered.connect(self.on_initdb)
+        self.menu.addAction(action)
 
-        action = QAction(QString(u'&Quit'), self)
+        # -- Quit
+        action = QAction(QString(u'Quit'), self)
         action.setToolTip(u'Quit everything')
         action.triggered.connect(self.on_quit)
         self.menu.addAction(action)
@@ -47,6 +52,9 @@ class WebSCardTrayIcon(QSystemTrayIcon):
 
         self.show()
 
+    def on_initdb(self):
+        self.webserverthread.wscard.init_database()
+
     def on_quit(self):
         """ Callback to quit """
         self.hide()
@@ -54,8 +62,8 @@ class WebSCardTrayIcon(QSystemTrayIcon):
         global app
         app.quit()
 
-def make_app():
-    config = Config('Z:\\WSCenv\\webscard\\webscard.cfg')
+def make_app(config_path):
+    config = Config(config_path)
     try:
         global app
         app = QApplication(sys.argv)
@@ -66,4 +74,4 @@ def make_app():
         pass
     
 if __name__ == "__main__":
-    make_app()
+    make_app('z:\\WSCenv\\webscard\\webscard.cfg')

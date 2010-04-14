@@ -2,6 +2,8 @@
 Mainly taken from the Werkzeug tutorial
 """
 
+import imp, os, sys
+
 try:
     import simplejson as json
 except ImportError:
@@ -46,3 +48,14 @@ def render(request, dict):
 
 def Exception2JSON(e):
     return {'hresult': 0x80100003}
+
+
+def main_is_frozen():
+   return (hasattr(sys, "frozen") or # new py2exe
+           hasattr(sys, "importers") # old py2exe
+           or imp.is_frozen("__main__")) # tools/freeze
+
+def get_main_dir():
+   if main_is_frozen():
+       return os.path.dirname(sys.executable)
+   return os.path.dirname(sys.argv[0])
