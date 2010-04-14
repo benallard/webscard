@@ -70,16 +70,6 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
     logger.logoutput(opuid, hresult, rgReaderStates=states)
     return render(request, {"hresult":hresult, "rgReaderStates":states})
 
-# I'm sceptic about this one ...
-@expose('/<int:context>/FreeMemory/<int:pvMem>')
-def freememory(request, context, pvMem):
-    hContext = Context.query.get(context)
-    impl = request.implementation
-    opuid = logger.loginput(hContext, pvMem=pvMem)
-    hresult, readers = impl.SCardFreeMemory( hContext.val, pvMem )
-    logger.logoutput(opuid, hresult)
-    return render(request, {"hresult":hresult})
-
 @expose('/<int:context>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocol': 3})
 @expose('/<int:handle>/Connect/dwSharedMode/<szReader>',
@@ -100,6 +90,32 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
                      dwActiveProtocol=dwActiveProtocol, time=after)
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
+
+@expose('/<int:card>/Reconnect', defaults={"dwShareMode":2, "dwPreferredProtocols":3, "dwInitialisation": 0})
+@expose('/<int:card>/Reconnect/<int:dwShareMode>', defaults={"dwPreferredProtocols":3, "dwInitialisation": 0})
+@expose('/<int:card>/Reconnect/<int:dwShareMode>/<int:dwPreferredProtocols>', defaults={"dwInitialisation": 0})
+@expose('/<int:card>/Reconnect/<int:dwShareMode>/<int:dwPreferredProtocols>/<int:dwInitialisation>')
+def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation):
+    hCard = Handle.query.get(card)
+    impl = request.implementation
+    opuid = logger.loginput(hCard.context, dwShareMode=dwShareMode, 
+                            dwPreferredProtocols=dwPreferredProtocols, 
+                            dwInitialisation=dwInitialisation)
+    hresult, dwActiveProtocol = impl.SCardReconnect(hCard.val, dwShareMode, dwPreferredProtocols, dwInitialisation)
+    logger.logoutput(opuid, hresult, dwInitialisation=dwInitialisation)
+    return render(request, {"hresult":hresult, "dwActiveProtocol":dwActiveProtocol})
+
+@expose("/<int:card>/Control/<int:dwControlCode>/inbuffer")
+def control(request, card, dwControlCode, inbuffer):
+    hCard = Handle.query.get(card)
+    impl = request.implementation
+    inbuffer = json.loads(inbuffer)
+    opuid = logger.loginput(hCard.context, dwControlCode=dwControlCode, inbuffer=inbuffer)
+    hresult, response = impl.SCardControl(hCard.val, dwControlCode, inbuffer)
+    logger.logoutput(opuid, hresult, outbuffer=response)
+    return render(request, {"hresult": hresult, "outbuffer": response})
+    
+    
 
 @expose('/<int:card>/Status')
 def status(request, card):
