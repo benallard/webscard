@@ -4,7 +4,10 @@ import select
 from webscard.utils import application
 
 name = "WebSCard"
-regtype = ["http", "smartcard"]
+regtype = [
+    "http", # Our HTTP interface
+    "smartcard-http", # SmartCard via HTTP
+]
 
 sdRef = []
 
