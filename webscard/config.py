@@ -1,5 +1,7 @@
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 
+import random
+
 class Config(SafeConfigParser):
     def __init__(self, file):
         SafeConfigParser.__init__(self)

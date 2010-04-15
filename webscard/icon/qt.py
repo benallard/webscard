@@ -18,7 +18,7 @@ class WebServerThread(QThread):
         self.app = werkzeug._easteregg(self.wscard)
 
     def run(self):
-        run_simple(self.config.gethost()
+        run_simple(self.config.gethost(),
                    self.config.getport(),
                    self.app)
         
