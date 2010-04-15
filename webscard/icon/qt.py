@@ -20,8 +20,7 @@ class WebServerThread(QThread):
     def run(self):
         run_simple(self.config.gethost(),
                    self.config.getport(),
-                   self.app)
-        
+                   self.app, threaded=True)
 
 class WebSCardTrayIcon(QSystemTrayIcon):
     def __init__(self, config):
