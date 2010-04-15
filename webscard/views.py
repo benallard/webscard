@@ -4,10 +4,11 @@ try:
 except:
     import json
 
+from werkzeug import url_unquote
 
 from webscard import logger, soap
 
-from webscard.utils import expose, render, dbsession
+from webscard.utils import expose, render, dbsession, unsigned_long
 
 from webscard.models.handle import Context, Handle
 from webscard.models.session import Session
@@ -41,18 +42,19 @@ def establishcontext(request, dwScope):
 def listreaders(request, context, mszGroups):
     hContext = Context.query.get(context)
     impl = request.implementation
-    mszGroups = json.loads(mszGroups)
+    mszGroups = json.loads(url_unquote(mszGroups))
     opuid = logger.loginput(hContext, readergroup=mszGroups)
     hresult, readers = impl.SCardListReaders( hContext.val, mszGroups )
     logger.logoutput(opuid, hresult, mszReaders=readers)
     return render(request, {"hresult":hresult, "mszReaders":readers})
 
 @expose('/<int:context>/GetStatusChange/<rgReaderStates>', defaults={'dwTimeout':60000})
-@expose('/<int:context>/GetStatusChange/<int:dwTimeout>/<rgReaderStates>')
+@expose('/<int:context>/GetStatusChange/<dwTimeout>/<rgReaderStates>')
 def getstatuschange(request, context, dwTimeout, rgReaderStates):
     hContext = Context.query.get(context)
     impl = request.implementation
-    rgReaderStates = json.loads(rgReaderStates)
+    dwTimeout = unsigned_long(dwTimeout)
+    rgReaderStates = json.loads(url_unquote(rgReaderStates))
     ReaderStates = []
     for readerstate in rgReaderStates:
         name = str(readerstate[0])
@@ -78,7 +80,7 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
 def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
     hContext = Context.query.get(context)
     impl = request.implementation
-    szReader = str(szReader)
+    szReader = str(url_unquote(szReader))
     opuid = logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
                     dwPreferredProtocol=dwPreferredProtocol)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
@@ -109,7 +111,7 @@ def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation
 def control(request, card, dwControlCode, inbuffer):
     hCard = Handle.query.get(card)
     impl = request.implementation
-    inbuffer = json.loads(inbuffer)
+    inbuffer = json.loads(url_unquote(inbuffer))
     opuid = logger.loginput(hCard.context, dwControlCode=dwControlCode, inbuffer=inbuffer)
     hresult, response = impl.SCardControl(hCard.val, dwControlCode, inbuffer)
     logger.logoutput(opuid, hresult, outbuffer=response)
@@ -156,7 +158,7 @@ def transmit(request, card, dwProtocol, apdu):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    apdu = json.loads(apdu)
+    apdu = json.loads(url_unquote(apdu))
     opuid = logger.loginput(hContext, dwProtocol=dwProtocol, apdu=apdu)
     hresult, response = impl.SCardTransmit(hCard.val, dwProtocol, apdu)
     logger.logoutput(opuid, hresult, response=response)

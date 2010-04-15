@@ -59,3 +59,6 @@ def get_main_dir():
    if main_is_frozen():
        return os.path.dirname(sys.executable)
    return os.path.dirname(sys.argv[0])
+
+def unsigned_long(s):
+    return int(s) % (2**32-1)
