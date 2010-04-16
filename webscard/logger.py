@@ -35,7 +35,7 @@ def logoutput(opuid, hresult, **params):
     current = record[op.context_uid][index]
     while not function in current:
          index -= 1
-         if index == -len(record[handle]):
+         if index == -len(record[op.context_uid]):
               raise KeyError(index)
          current = record[op.context_uid][index]
 
