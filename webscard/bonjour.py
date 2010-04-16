@@ -1,4 +1,8 @@
-import pybonjour
+try:
+    import pybonjour
+except: # WindowsError on Windows
+    pybonjour = None
+
 import select
 
 from webscard.utils import application
@@ -20,6 +24,8 @@ def _register_callback(sdRef, flags, errorCode, name, regtype, domain):
 ns = lambda s: "%c%s" % (len(s), s)
 
 def register(port, implementations):
+    if pybonjour == None:
+        return
     txt = ns("txtvers=1")
     txt += ns("protovers=1")
     for imp in implementations:

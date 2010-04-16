@@ -1,10 +1,12 @@
-import sys
+import os, sys
 
 from PyQt4.QtGui import (QApplication, QSystemTrayIcon, QAction, QMenu, QIcon, QPixmap)
 from PyQt4.QtCore import (Qt, QString, QThread)
 
 from webscard.application import WebSCard
 from webscard.config import Config
+
+from webscard.utils import get_main_dir
 
 import werkzeug
 from werkzeug import run_simple
@@ -25,7 +27,7 @@ class WebServerThread(QThread):
 class WebSCardTrayIcon(QSystemTrayIcon):
     def __init__(self, config):
         QSystemTrayIcon.__init__(self)
-        self.setIcon(QIcon(QPixmap('Z:\\Spider.web.logo.png')))
+        self.setIcon(QIcon(QPixmap('%s%sSpider.web.logo.png' % (get_main_dir(), os.path.sep))))
         self.menu = QMenu(QString("WebScard Menu"))
         self.setContextMenu(self.menu)
 

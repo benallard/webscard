@@ -8,11 +8,12 @@ setup(
     version='0.5',
     url='http://bitbucket.org/benallard/webscard',
     packages=packages,
-    requires=['werkzeug', 'sqlalchemy', 'pybonjour'],
+    requires=['werkzeug', 'sqlalchemy', 'pybonjour', 'elementtree'],
     console=['manage.py'],
     windows=['start_qt.py'],
+    data_files=[('', ['Spider.web.logo.png', 'sample.cfg'])],
     options={'py2exe': {
-            "packages":["sqlalchemy.dialects.sqlite", "sip", "pybonjour"],
+            "packages":["sqlalchemy.dialects.sqlite", "sip", "pybonjour",],
             "excludes":["Tkconstants", "tcl", "Tkinter"],
 
 }})
