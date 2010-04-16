@@ -4,6 +4,8 @@ So that one session has its own (set of) reader(s)
 and does not get distrurbance from other sessions
 """
 
+import random
+
 from smartcard import scard as pyscard
 
 from webscard.utils import application
@@ -51,11 +53,13 @@ def _filterreaders(uid, readers):
             if taken.get(reader) == uid:
                 contextreaders.append(reader)
     else:
+        free = []
         for reader in readers:
             if reader not in taken:
-                if len(contextreaders) < limit:
-                    contextreaders.append(reader)
-                    taken[reader] = uid
+                free.append(reader)
+        contextreaders = random.sample(free, limit)
+        for reader in contextreaders:
+            taken[reader] = uid
         served.append(uid)
     return contextreaders
 
