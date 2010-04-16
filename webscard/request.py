@@ -6,6 +6,8 @@ from werkzeug.contrib.securecookie import SecureCookie
 from webscard.utils import application, render
 from webscard.models.session import Session
 
+from webscard.soap import SOAP_SUGAR
+
 cookiename = 'session_data'
 
 class Request(BaseRequest):
@@ -60,12 +62,32 @@ class Request(BaseRequest):
     @cached_property
     def xmlroot(self):
         if application.config.getbool('internal.debug', False):
-             tree = ET.ElementTree(file=FileObj('<root><operation name="establishcontext" /><operation name="connect" readername="OmniKey CardMan 6121 00 00" /><operation name="transmit"><cmd>0</cmd><cmd>164</cmd><cmd>4</cmd><cmd>0</cmd><cmd>8</cmd><cmd>160</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd><cmd>3</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd></operation><operation name="transmit"><cmd>128</cmd><cmd>202</cmd><cmd>159</cmd><cmd>127</cmd><cmd>0</cmd></operation><operation name="disconnect" /><operation name="releasecontext" /></root>'))
-             return tree.getroot()
-        if self.headers.get('content-type') == 'application/soap+xml':
+            tree = ET.ElementTree(file=FileObj(SOAP_SUGAR % MACROS[1]))
+            print tree
+            return tree.getroot()
+        if self.headers.get('content-type') in ['application/soap+xml', 
+                                                'text/xml']:
             tree = ET.ElementTree(file=FileObj(self.data))
             return tree.getroot()
-       
+        else:
+            print "Wong headers: %s" % self.headers.get('content-type')
+
+    @cached_property
+    def soapbody(self):
+        elem = self.xmlroot
+        if elem.tag == '{http://www.w3.org/2001/12/soap-envelope}Envelope':
+            print "found envolope"
+            print elem.getchildren()[0].tag
+            elem = elem.find('{http://www.w3.org/2001/12/soap-envelope}Body')
+            if (elem is not None) and (len(elem) == 1):
+                print "returnning content of body"
+                return elem.getchildren()[0]
+            return None
+        return elem
+                
+
+MACROS = ['<operations><operation name="establishcontext" /><operation name="connect" readername="OmniKey CardMan 6121 00 00" /><operation name="transmit"><cmd>0</cmd><cmd>164</cmd><cmd>4</cmd><cmd>0</cmd><cmd>8</cmd><cmd>160</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd><cmd>3</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd></operation><operation name="transmit"><cmd>128</cmd><cmd>202</cmd><cmd>159</cmd><cmd>127</cmd><cmd>0</cmd></operation><operation name="disconnect" /><operation name="releasecontext" /></operations>', 
+          '<operations><operation name="establishcontext" /><operation name="connect" readername="OMNIKEY CardMan 5x21-CL 0" /><operation name="transmit" ignorefailure="1"><byte>255</byte><byte>202</byte><byte>0</byte><byte>0</byte><byte>0</byte></operation><operation name="disconnect" ignorefailure="1" /><operation name="releasecontext" ignorefailure="1" /></operations>']
 
 class FileObj(object):
     def __init__(self, data):

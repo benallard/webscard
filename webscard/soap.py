@@ -1,14 +1,18 @@
 from webscard.implementations.chooser import createimpl, instanciateimpl
 
+from webscard.utils import hexlikeiwant
+
 from werkzeug import Response
 
 from elementtree.ElementTree import Element, SubElement, ElementTree
 
+SOAP_SUGAR = '<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2001/12/soap-envelope" soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding"><soap:Body>%s</soap:Body></soap:Envelope>'
+
 def shouldexit(hresult, opelem):
-    return (hresult != 0) and not bool(opelem.get("ignorefailure", "0"))
+    return (hresult != 0) or not bool(opelem.get("ignorefailure", "0"))
 
 def v1(request):
-    root = request.xmlroot
+    root = request.soapbody
     if root is None:
         return Response("No body")
     implname = root.get("implementation", "pyscard")
@@ -16,7 +20,7 @@ def v1(request):
     impldict = createimpl(implname)
     impl = instanciateimpl(impldict, request.session)
 
-    res = Element('root')
+    res = Element('operations')
 
     context = None
     card = None
@@ -26,28 +30,28 @@ def v1(request):
         name = opelem.get('name')
         if name not in ['establishcontext', 'connect', 'transmit',
                         'disconnect','releasecontext']:
-            SubElement(res, name).text = "Operation not recognized"
+            SubElement(res, "operation", name=name).text = "Operation not recognized"
             continue
         if name == 'establishcontext':
             op = impl.SCardEstablishContext
             dwScope = int(opelem.get('dwScope', "2"))
             hresult, context = op(dwScope)
-            SubElement(res, name, hresult=str(hresult), context=str(context))
+            SubElement(res, 'operation', name=name, hresult=str(hresult), context=str(context))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'connect':
             op = impl.SCardConnect
             readername=opelem.get("readername")
             if context is None:
-                SubElement(res, name).text = "No context"
+                SubElement(res, 'operation', name=name).text = "No context"
                 continue
             if readername is None:
-                SubElement(res, name).text = "No ReaderName specified"
+                SubElement(res, 'operation', name=name).text = "No ReaderName specified"
                 continue
             shared = int(opelem.get("dwShared", "2"))
             prot = int(opelem.get("dwPreferredProtocol", 3))
             hresult, card, activeprot = op(context, readername, shared, prot)
-            SubElement(res, name, hresult=str(hresult), card=str(card), activeprot=str(activeprot))
+            SubElement(res,'operation', name=name, hresult=str(hresult), card=str(card), activeprot=str(activeprot))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'transmit':
@@ -55,27 +59,28 @@ def v1(request):
             prot = int(opelem.get("dwProtocol", str(activeprot)))
             apdu = []
             for node in opelem:
-                if node.tag == 'cmd':
-                    byte = int(node.text)
-                    if byte > 0 and byte < 0x100:
+                if node.tag == 'byte':
+                    byte = int(node.text, node.get('base', 10))
+                    if byte >= 0 and byte < 0x100:
                         apdu.append(byte)
             hresult, response = op(card, prot, apdu)
-            cur = SubElement(res, name, hresult=str(hresult))
+            cur = SubElement(res, 'operation', name=name, hresult=str(hresult))
             for byte in response:
-                SubElement(cur, "cmd").text = str(byte)
+                SubElement(cur, "byte", 
+                           base="16").text = str(hexlikeiwant(byte))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'disconnect':
             op = impl.SCardDisconnect
             disp = int(opelem.get("dwDisposition", "0"))
             hresult = op(card, disp)
-            SubElement(res, name, hresult=str(hresult))
+            SubElement(res, 'operation', name=name, hresult=str(hresult))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'releasecontext':
             op = impl.SCardReleaseContext
             hresult = op(context)
-            SubElement(res, name, hresult=str(hresult))
+            SubElement(res, 'operation', name=name, hresult=str(hresult))
             if shouldexit(hresult, opelem):
                 break
 
@@ -83,8 +88,9 @@ def v1(request):
 
     f = FileObj()
     ElementTree(res).write(f)
+    response = SOAP_SUGAR % f.data
 
-    return Response(f.data, content_type="application/json+xml")
+    return Response(response, content_type="application/json+xml")
 
 class FileObj(object):
     data = ""
