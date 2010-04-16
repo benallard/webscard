@@ -40,10 +40,8 @@ def isabrowser(request):
 
 def render(request, dict):
     indent = isabrowser(request) and 4 or None
-    try:
-        dict['HRformat'] = SCardGetErrorMessage(dict['hresult'])
-    except:
-        pass
+    if isabrowser(request):
+        dict['HRformat'] = SCardGetErrorMessage(dict.get('hresult', 0))
     return Response(json.dumps(dict, indent=indent, separators=(',', ':')))
 
 def Exception2JSON(e):
