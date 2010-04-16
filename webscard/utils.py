@@ -62,3 +62,16 @@ def get_main_dir():
 
 def unsigned_long(s):
     return int(s) % (2**32-1)
+
+
+def hexlikeiwant(b):
+    """
+    >>> hexlikeiwant(10)
+    '0A'
+    >>> hexlikeiwant(65)
+    '41'
+    """
+    b = hex(b)[2:].upper()
+    if len(b) == 1:
+        b = '0' + b
+    return b

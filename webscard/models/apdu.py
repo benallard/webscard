@@ -1,24 +1,13 @@
 from sqlalchemy import Table, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapper
 
-from webscard.utils import dbsession, metadata
+from webscard.utils import dbsession, metadata, hexlikeiwant
 
 def stringify(bytes):
     """
     >>> stringify([0,3, 66])
     '00 03 42'
     """
-    def hexlikeiwant(b):
-        """
-        >>> hexlikeiwant(10)
-        '0A'
-        >>> hexlikeiwant(65)
-        '41'
-        """
-        b = hex(b)[2:].upper()
-        if len(b) == 1:
-            b = '0' + b
-        return b
     return ' '.join(map(hexlikeiwant, bytes))
 
 apdu_table = Table('apdus', metadata,
