@@ -68,7 +68,6 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
             return tree.getroot()
         if self.mimetype in ['application/soap+xml', 
                              'text/xml']:
-            print self.data
             try:
                 tree = ET.ElementTree(file=FileObj(self.data))
                 return tree.getroot()
@@ -82,11 +81,8 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
     def soapbody(self):
         elem = self.xmlroot
         if elem.tag == '{http://www.w3.org/2001/12/soap-envelope}Envelope':
-            print "found envolope"
-            print elem.getchildren()[0].tag
             elem = elem.find('{http://www.w3.org/2001/12/soap-envelope}Body')
             if (elem is not None) and (len(elem) == 1):
-                print "returnning content of body"
                 return elem.getchildren()[0]
             return None
         return elem
