@@ -7,7 +7,7 @@ from werkzeug.contrib.securecookie import SecureCookie
 from webscard.utils import application, render
 from webscard.models.session import Session
 
-from webscard.soap import SOAP_SUGAR
+from webscard import soap
 
 cookiename = 'session_data'
 
@@ -63,7 +63,7 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
     @cached_property
     def xmlroot(self):
         if application.config.getbool('internal.debug', False):
-            tree = ET.ElementTree(file=FileObj(SOAP_SUGAR % MACROS[1]))
+            tree = ET.ElementTree(file=FileObj(soap.SUGAR % MACROS[1]))
             print tree
             return tree.getroot()
         if self.headers.get('content-type') in ['application/soap+xml', 
