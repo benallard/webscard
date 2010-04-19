@@ -66,10 +66,15 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
             tree = ET.ElementTree(file=FileObj(soap.SUGAR % MACROS[1]))
             print tree
             return tree.getroot()
-        if self.headers.get('content-type') in ['application/soap+xml', 
-                                                'text/xml']:
-            tree = ET.ElementTree(file=FileObj(self.data))
-            return tree.getroot()
+        if self.mimetype in ['application/soap+xml', 
+                             'text/xml']:
+            print self.data
+            try:
+                tree = ET.ElementTree(file=FileObj(self.data))
+                return tree.getroot()
+            except ExpatError:
+                print "Wrong XML"
+                return None
         else:
             print "Wong headers: %s" % self.headers.get('content-type')
 
