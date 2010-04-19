@@ -164,6 +164,7 @@ def acquire(session):
     map[session.uid]  = {}
     map[session.uid]['inst'] = implinst
     map[session.uid]['name'] = impl['name']
+    map[session.uid]['hard'] = impl['hard']
     return implinst
 
 def get(session):
