@@ -1,6 +1,7 @@
 import elementtree.ElementTree as ET
 
-from werkzeug import BaseRequest, cached_property
+from werkzeug import BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin
+from werkzeug import cached_property
 from werkzeug.contrib.securecookie import SecureCookie
 
 from webscard.utils import application, render
@@ -10,7 +11,7 @@ from webscard.soap import SOAP_SUGAR
 
 cookiename = 'session_data'
 
-class Request(BaseRequest):
+class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     max_content_length = 1024 * 1024 # 1 MB
 
