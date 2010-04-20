@@ -107,7 +107,7 @@ def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation
     logger.logoutput(opuid, hresult, dwInitialisation=dwInitialisation)
     return render(request, {"hresult":hresult, "dwActiveProtocol":dwActiveProtocol})
 
-@expose("/<int:card>/Control/<int:dwControlCode>/inbuffer")
+@expose('/<int:card>/Control/<int:dwControlCode>/inbuffer')
 def control(request, card, dwControlCode, inbuffer):
     hCard = Handle.query.get(card)
     impl = request.implementation

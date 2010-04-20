@@ -128,8 +128,19 @@ def cleanexpiredsoftsessions(current):
             session = Session.query.get(session_uid)
             if session.inactivity() > TIMEOUT:
                 expired.append(session)
+    print "cleaning %d sessions" % len(expired)
     for session in expired:
         release(session, current)
+    print "%d active sessions remaining" % len(map)
+
+def release(session, current):
+    impl = map[session.uid]
+    del map[session.uid]
+    session.closedby = current
+    # call the release function from the pool
+    for i in pool:
+        if i['name'] == impl['name']:
+            i['release'](session)
 
 def instanciateimpl(impl, session):
     if impl['hard']:
@@ -169,11 +180,3 @@ def acquire(session):
 
 def get(session):
     return map[session.uid]['inst']
-
-def release(session, current):
-    impl = map[session.uid]
-    del map[session.uid]
-    session.closedby = current
-    for i in pool:
-        if i['name'] == impl['name']:
-            i['release'](session)

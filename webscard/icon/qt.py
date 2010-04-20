@@ -9,7 +9,9 @@ from webscard.config import Config
 from webscard.utils import get_main_dir
 
 import werkzeug
-from werkzeug import run_simple
+
+from cherrypy import wsgiserver
+
 
 class WebServerThread(QThread):
     def __init__(self, config):
@@ -18,26 +20,31 @@ class WebServerThread(QThread):
         self.wscard = WebSCard(config)
         # One might want to wrap it in a static middleware instead of that one
         self.app = werkzeug._easteregg(self.wscard)
+        self.server = wsgiserver.CherryPyWSGIServer((self.config.gethost(),
+                                                     self.config.getport()),
+                                                    self.app)
 
     def run(self):
-        run_simple(self.config.gethost(),
-                   self.config.getport(),
-                   self.app, threaded=True)
+        self.server.start()
+        
+    def stop(self):
+        self.server.stop()
 
 class WebSCardTrayIcon(QSystemTrayIcon):
     def __init__(self, config):
         QSystemTrayIcon.__init__(self)
-        self.setIcon(QIcon(QPixmap('%s%sSpider.web.logo.png' % (get_main_dir(), os.path.sep))))
+        self.config = config
+        self.setIcon(QIcon(QPixmap(os.path.join(get_main_dir(), 'Spider.web.logo.png'))))
         self.menu = QMenu(QString("WebScard Menu"))
         self.setContextMenu(self.menu)
 
-        # -- reload
+        # -- restart
 
         # -- configure with GUI
 
         # -- initdb
         action = QAction(QString(u'Init db'), self)
-        action.setToolTip(u'Initialize the database where is is configured')
+        action.setToolTip(u'Initialize the database as configured')
         action.triggered.connect(self.on_initdb)
         self.menu.addAction(action)
 
@@ -60,6 +67,7 @@ class WebSCardTrayIcon(QSystemTrayIcon):
     def on_quit(self):
         """ Callback to quit """
         self.hide()
+        self.webserverthread.stop()
         self.menu.destroy()
         global app
         app.quit()
