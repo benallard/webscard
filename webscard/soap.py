@@ -60,7 +60,7 @@ def v1(request):
             apdu = []
             for node in opelem:
                 if node.tag == 'byte':
-                    byte = int(node.text, node.get('base', 10))
+                    byte = int(node.text, int(node.get('base', '10')))
                     if byte >= 0 and byte < 0x100:
                         apdu.append(byte)
             hresult, response = op(card, prot, apdu)
