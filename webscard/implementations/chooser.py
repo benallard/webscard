@@ -1,4 +1,4 @@
-import imp, os, random
+import imp, os, random, thread
 
 import ConfigParser
 
@@ -100,6 +100,7 @@ def getmodulefor(name):
 pool = []
 # map session to implementation and name
 map = {}
+mapmutex = thread.allocate_lock()
 def initialize():
     impls =  application.config.getimplementations()
     for implname in impls:
@@ -109,6 +110,7 @@ def initialize():
 def releaseoldestexpiredsession(name, current):
     bad = None
     badinactvity = TIMEOUT
+    mapmutex.acquire()
     for session_uid in map:
         if map[session_uid]['name'] == name:
             session = Session.query.get(session_uid)
@@ -116,6 +118,7 @@ def releaseoldestexpiredsession(name, current):
             if inactivity > badinactivity:
                 bad = session_uid
                 badinactivity = inactivity
+    mapmutex.release()
     if bad is not None:
         release(bad, current)
         return True
@@ -123,11 +126,13 @@ def releaseoldestexpiredsession(name, current):
 
 def cleanexpiredsoftsessions(current):
     expired = []
+    mapmutex.acquire()
     for session_uid in map:
         if not map[session_uid]['hard']:
             session = Session.query.get(session_uid)
             if session.inactivity() > TIMEOUT:
                 expired.append(session)
+    mapmutex.release()
     print "cleaning %d sessions" % len(expired)
     for session in expired:
         release(session, current)
@@ -172,10 +177,12 @@ def acquire(session):
         impl = random.choice(free)
 
     implinst = instanciateimpl(impl, session)
+    mapmutex.acquire()
     map[session.uid]  = {}
     map[session.uid]['inst'] = implinst
     map[session.uid]['name'] = impl['name']
     map[session.uid]['hard'] = impl['hard']
+    mapmutex.release()
     return implinst
 
 def get(session):
