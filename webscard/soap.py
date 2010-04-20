@@ -6,7 +6,7 @@ from werkzeug import Response
 
 from elementtree.ElementTree import Element, SubElement, ElementTree
 
-SOAP_SUGAR = '<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2001/12/soap-envelope" soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding"><soap:Body>%s</soap:Body></soap:Envelope>'
+SUGAR = '<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2001/12/soap-envelope" soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding"><soap:Body>%s</soap:Body></soap:Envelope>'
 
 def shouldexit(hresult, opelem):
     return (hresult != 0) or not bool(opelem.get("ignorefailure", "0"))
@@ -88,7 +88,7 @@ def v1(request):
 
     f = FileObj()
     ElementTree(res).write(f)
-    response = SOAP_SUGAR % f.data
+    response = SUGAR % f.data
 
     return Response(response, content_type="application/json+xml")
 

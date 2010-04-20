@@ -1,16 +1,17 @@
 import elementtree.ElementTree as ET
 
-from werkzeug import BaseRequest, cached_property
+from werkzeug import BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin
+from werkzeug import cached_property
 from werkzeug.contrib.securecookie import SecureCookie
 
 from webscard.utils import application, render
 from webscard.models.session import Session
 
-from webscard.soap import SOAP_SUGAR
+from webscard import soap
 
 cookiename = 'session_data'
 
-class Request(BaseRequest):
+class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     max_content_length = 1024 * 1024 # 1 MB
 
@@ -62,13 +63,18 @@ class Request(BaseRequest):
     @cached_property
     def xmlroot(self):
         if application.config.getbool('internal.debug', False):
-            tree = ET.ElementTree(file=FileObj(SOAP_SUGAR % MACROS[1]))
+            tree = ET.ElementTree(file=FileObj(soap.SUGAR % MACROS[1]))
             print tree
             return tree.getroot()
-        if self.headers.get('content-type') in ['application/soap+xml', 
-                                                'text/xml']:
-            tree = ET.ElementTree(file=FileObj(self.data))
-            return tree.getroot()
+        if self.mimetype in ['application/soap+xml', 
+                             'text/xml']:
+            print self.data
+            try:
+                tree = ET.ElementTree(file=FileObj(self.data))
+                return tree.getroot()
+            except ExpatError:
+                print "Wrong XML"
+                return None
         else:
             print "Wong headers: %s" % self.headers.get('content-type')
 
