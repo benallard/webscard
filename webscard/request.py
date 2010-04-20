@@ -25,7 +25,6 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
     def client_session(self):
         data = self.cookies.get(cookiename)
         if not data:
-            print "No cookie"
             return SecureCookie(secret_key=application.secret_key)
         return SecureCookie.unserialize(data, application.secret_key)
 

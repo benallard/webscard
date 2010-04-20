@@ -22,7 +22,7 @@ local_manager = LocalManager([local])
 application = local('application')
 
 metadata = MetaData()
-dbsession = scoped_session(sessionmaker(), local_manager.get_ident)
+dbsession = scoped_session(sessionmaker(autocommit=True), local_manager.get_ident)
 
 url_map = Map(redirect_defaults=False)
 def expose(rule, **kw):

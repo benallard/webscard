@@ -37,7 +37,6 @@ class WebSCard(object):
         request = Request(environ)
         local.url_adapter = url_map.bind_to_environ(environ)
         response = self.getresponse(request)
-        dbsession.commit()
         return ClosingIterator(response(environ, start_response),
                                [dbsession.remove, local_manager.cleanup])
 
