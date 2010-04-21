@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from webscard.utils import application
 
-TIMEOUT = timedelta(0, 5* 60)
+TIMEOUT = timedelta(minutes = 5)
 
 THRESHOLD = 20
 
@@ -56,11 +56,19 @@ def createimpl(name):
             acquire = lambda s: impl
         res['acquire'] = acquire
 
+        def generatefunction(impl):
+            releasecontext = impl.SCardReleaseContext
+            def releaseremainingcontexts(session):
+                for c in session.contexts:
+                    if not c.isreleased():
+                        releasecontext(c.val)
+            return releaseremainingcontexts
+
         release = cfg.getstring('%s.release' % name, None)
         if release is not None:
             release = getattr(impl, release)
         else:
-            release = lambda s: s
+            release = generatefunction(impl)
         res['release'] = release
 
     return res
@@ -132,6 +140,8 @@ def cleanexpiredsoftsessions(current):
             session = Session.query.get(session_uid)
             if session.inactivity() > TIMEOUT:
                 expired.append(session)
+            else:
+                print "leaving session with inactivity below timeout: %s" % session.inactivity()
     mapmutex.release()
     print "cleaning %d sessions" % len(expired)
     for session in expired:
