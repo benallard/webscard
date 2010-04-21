@@ -65,7 +65,6 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
             pass
         ReaderStates.append(res)
     opuid = logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
-    dbsession.commit() # avoid locking the db while we wait
     hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, ReaderStates )
     logger.logoutput(opuid, hresult, rgReaderStates=states)
     return render(request, {"hresult":hresult, "rgReaderStates":states})
