@@ -31,7 +31,6 @@ class Session(object):
         self.firstactivity = datetime.now()
         self.update()
         dbsession.add(self)
-        dbsession.flush() # that will assign us a uid
         self.impl = chooser.acquire(self)
 
     def validatecontext(self, context):
