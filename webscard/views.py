@@ -191,9 +191,10 @@ def releasecontext(request, context):
     return render(request, {"hresult":hresult})
 
 # our SOAP interface
-@expose('/soap/v1')
-def soapv1(request):
-    return soap.v1(request)
+@expose('/soap/v<int:version>')
+def soapv(request, version):
+    method = getattr(soap, 'v%d' % version)
+    return method(request)
 
 # name it differenty to avoid it being checked by the validator
 @expose('/<int:logcontext>')
