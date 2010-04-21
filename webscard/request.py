@@ -63,7 +63,6 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
     def xmlroot(self):
         if application.config.getbool('internal.debug', False):
             tree = ET.ElementTree(file=FileObj(soap.SUGAR % MACROS[1]))
-            print tree
             return tree.getroot()
         if self.mimetype in ['application/soap+xml', 
                              'text/xml']:
