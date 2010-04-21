@@ -50,7 +50,7 @@ class APDU(object):
             self.cla, self.ins, self.P1, self.P2, self.Le = self.command[:5]
             self.data_command = stringify(self.command[5:])
             self.SW1, self.SW2 = response
-        elif (len (self.command) == self.command[4] + 6) and (len(response) == self.command[:-1] + 2):
+        elif (len (self.command) == self.command[4] + 6) and (len(response) == self.command[-1] + 2):
             self.type = 4
             self.cla, self.ins, self.P1, self.P2, self.Le = self.command[:5]
             self.data_command = stringify(self.command[5:])
