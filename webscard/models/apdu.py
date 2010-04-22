@@ -33,6 +33,7 @@ class APDU(object):
         self.operation_uid = operation.uid
         self.command = bytes
         dbsession.add(self)
+        dbsession.flush()
 
     def received(self, bytes):
         response = bytes

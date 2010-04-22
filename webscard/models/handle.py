@@ -17,6 +17,8 @@ class Handle(object):
         self.value = value
         self.context_uid = context.uid
         context.handles.append(self)
+        dbsession.add(self)
+        dbsession.flush()
 
     @property
     def val(self):
@@ -38,6 +40,7 @@ class Context(object):
         self.session_uid = session.uid
         self.value = value
         dbsession.add(self)
+        dbsession.flush()
 
     @property
     def val(self):

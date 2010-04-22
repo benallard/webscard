@@ -31,6 +31,7 @@ class Session(object):
         self.firstactivity = datetime.now()
         self.update()
         dbsession.add(self)
+        dbsession.flush()
         self.impl = chooser.acquire(self)
 
     def validatecontext(self, context):
