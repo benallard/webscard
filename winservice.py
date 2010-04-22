@@ -11,6 +11,10 @@ import win32evtlogutil
 from webscard.application import WebSCard
 from webscard.config import Config
 
+import sys
+sys.stderr = open(r'c:\webscard\webscard_err.log', 'w')
+sys.stdout = open(r'c:\webscard\webscard_out.log', 'w')
+
 class WebSCardService(win32serviceutil.ServiceFramework):
     """NT Service."""
     
