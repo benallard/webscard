@@ -1,5 +1,7 @@
 import elementtree.ElementTree as ET
 
+from xml.parsers.expat import ExpatError
+
 from werkzeug import BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin
 from werkzeug import cached_property
 from werkzeug.contrib.securecookie import SecureCookie
@@ -9,7 +11,7 @@ from webscard.models.session import Session
 
 from webscard import soap
 
-cookiename = 'session_data'
+COOKIENAME = 'session_data'
 
 class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
@@ -23,14 +25,14 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     @cached_property
     def client_session(self):
-        data = self.cookies.get(cookiename)
+        data = self.cookies.get(COOKIENAME)
         if not data:
             return SecureCookie(secret_key=application.secret_key)
         return SecureCookie.unserialize(data, application.secret_key)
 
     def getsession(self):
         session_data = self.client_session
-	if ('sid' in session_data) and (session_data['sid'] is not None):
+        if ('sid' in session_data) and (session_data['sid'] is not None):
             self.session = Session.query.get(session_data['sid'])
             self.session.update()
         else:
@@ -46,7 +48,7 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
         if self.newsession:
             self.client_session['sid'] = self.session.uid
             session_data = self.client_session.serialize()
-            response.set_cookie(cookiename, session_data)
+            response.set_cookie(COOKIENAME, session_data)
 
     def validatesession(self, **values):
         if 'context' in values:
@@ -86,14 +88,38 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
         return elem
                 
 
-MACROS = ['<operations><operation name="establishcontext" /><operation name="connect" readername="OmniKey CardMan 6121 00 00" /><operation name="transmit"><cmd>0</cmd><cmd>164</cmd><cmd>4</cmd><cmd>0</cmd><cmd>8</cmd><cmd>160</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd><cmd>3</cmd><cmd>0</cmd><cmd>0</cmd><cmd>0</cmd></operation><operation name="transmit"><cmd>128</cmd><cmd>202</cmd><cmd>159</cmd><cmd>127</cmd><cmd>0</cmd></operation><operation name="disconnect" /><operation name="releasecontext" /></operations>', 
-          '<operations><operation name="establishcontext" /><operation name="connect" readername="OMNIKEY CardMan 5x21-CL 0" /><operation name="transmit" ignorefailure="1"><byte>255</byte><byte>202</byte><byte>0</byte><byte>0</byte><byte>0</byte></operation><operation name="disconnect" ignorefailure="1" /><operation name="releasecontext" ignorefailure="1" /></operations>']
+MACROS = ["""
+<operations>
+  <operation name="establishcontext" />
+  <operation name="connect" readername="OmniKey CardMan 6121 00 00" />
+  <operation name="transmit">
+    <byte base="16">00</byte><byte>164</byte><byte>4</byte><byte>0</byte>
+    <byte>8</byte><byte>160</byte><byte>0</byte><byte>0</byte><byte>0</byte>
+    <byte>3</byte><byte>0</byte><byte>0</byte><byte>0</byte>
+  </operation>
+  <operation name="transmit">
+    <byte>128</byte><byte>202</byte><byte>159</byte><byte>127</byte><byte>0</byte>
+  </operation>
+  <operation name="disconnect" />
+  <operation name="releasecontext" />
+</operations>""",
+          """
+<operations>
+  <operation name="establishcontext" />
+  <operation name="connect" readername="OMNIKEY CardMan 5x21-CL 0" />
+  <operation name="transmit" ignorefailure="1">
+    <byte base="16">FF</byte><byte base="16">CA</byte><byte>0</byte>
+    <byte>0</byte><byte>0</byte>
+  </operation>
+  <operation name="disconnect" ignorefailure="1" />
+  <operation name="releasecontext" ignorefailure="1" />
+</operations>"""
+]
 
 class FileObj(object):
     def __init__(self, data):
         self.data = data
-
-    index = 0
+        self.index = 0
     def read(self, size):
         self.index += size
         return self.data[self.index-size:self.index]

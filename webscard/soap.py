@@ -6,12 +6,21 @@ from werkzeug import Response
 
 from elementtree.ElementTree import Element, SubElement, ElementTree
 
-SUGAR = '<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2001/12/soap-envelope" soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding"><soap:Body>%s</soap:Body></soap:Envelope>'
+SUGAR = """
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2001/12/soap-envelope"
+ soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
+<soap:Body>
+%s
+</soap:Body>
+
+</soap:Envelope>"""
 
 def shouldexit(hresult, opelem):
+    """ Is the error fatal """
     return (hresult != 0) or not bool(opelem.get("ignorefailure", "0"))
 
-def v1(request):
+def version1(request):
     root = request.soapbody
     if root is None:
         return Response("No body")
@@ -30,28 +39,32 @@ def v1(request):
         name = opelem.get('name')
         if name not in ['establishcontext', 'connect', 'transmit',
                         'disconnect','releasecontext']:
-            SubElement(res, "operation", name=name).text = "Operation not recognized"
+            SubElement(res, "operation",
+                       name=name).text = "Operation not recognized"
             continue
         if name == 'establishcontext':
             op = impl.SCardEstablishContext
             dwScope = int(opelem.get('dwScope', "2"))
             hresult, context = op(dwScope)
-            SubElement(res, 'operation', name=name, hresult=str(hresult), context=str(context))
+            SubElement(res, 'operation', name=name, hresult=str(hresult),
+                       context=str(context))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'connect':
             op = impl.SCardConnect
-            readername=opelem.get("readername")
+            readername = opelem.get("readername")
             if context is None:
                 SubElement(res, 'operation', name=name).text = "No context"
                 continue
             if readername is None:
-                SubElement(res, 'operation', name=name).text = "No ReaderName specified"
+                SubElement(res, 'operation',
+                           name=name).text = "No ReaderName specified"
                 continue
             shared = int(opelem.get("dwShared", "2"))
             prot = int(opelem.get("dwPreferredProtocol", 3))
             hresult, card, activeprot = op(context, readername, shared, prot)
-            SubElement(res,'operation', name=name, hresult=str(hresult), card=str(card), activeprot=str(activeprot))
+            SubElement(res,'operation', name=name, hresult=str(hresult), 
+                       card=str(card), activeprot=str(activeprot))
             if shouldexit(hresult, opelem):
                 break
         elif name == 'transmit':

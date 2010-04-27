@@ -5,6 +5,7 @@ import ConfigParser
 from datetime import timedelta
 
 from webscard.utils import application
+from webscard.models.session import Session
 
 TIMEOUT = timedelta(minutes = 5)
 
@@ -25,7 +26,7 @@ def createimpl(name):
         except AttributeError:
             raise AttributeError(
                 "class %s does not exist on the specified module" %
-                self.classname)
+                classname)
         if hard:
             # There is one class to manage everything
             impl = impl()
@@ -49,12 +50,12 @@ def createimpl(name):
             raise ValueError(free)
         res['free'] = free
 
-        acquire = cfg.getstring('%s.acquire' % name, None)
-        if acquire is not None:
-            acquire = getattr(impl, acquire)
+        acquirename = cfg.getstring('%s.acquire' % name, None)
+        if acquirename is not None:
+            acquirefunc = getattr(impl, acquirename)
         else:
-            acquire = lambda s: impl
-        res['acquire'] = acquire
+            acquirefunc = lambda s: impl
+        res['acquire'] = acquirefunc
 
         def generatefunction(impl):
             releasecontext = impl.SCardReleaseContext
@@ -64,18 +65,17 @@ def createimpl(name):
                         releasecontext(c.val)
             return releaseremainingcontexts
 
-        release = cfg.getstring('%s.release' % name, None)
-        if release is not None:
-            release = getattr(impl, release)
+        releasename = cfg.getstring('%s.release' % name, None)
+        if releasename is not None:
+            releasefunc = getattr(impl, releasename)
         else:
-            release = generatefunction(impl)
-        res['release'] = release
+            releasefunc = generatefunction(impl)
+        res['release'] = releasefunc
 
     return res
 
 def loadpath(path, name):
     """ taken from mercurial.extensions """
-    cfg = application.config
     name = name.replace('.','_')
     path = os.path.expanduser(os.path.expandvars(path))
     if os.path.isdir(path):
@@ -105,28 +105,28 @@ def getmodulefor(name):
     print "mod is %s" % mod
     return mod
 
-pool = []
+POOL = []
 # map session to implementation and name
-map = {}
-mapmutex = thread.allocate_lock()
+MAP = {}
+MAPMUTEX = thread.allocate_lock()
 def initialize():
     impls =  application.config.getimplementations()
     for implname in impls:
-        pool.append(createimpl(implname))
+        POOL.append(createimpl(implname))
 
 
 def releaseoldestexpiredsession(name, current):
     bad = None
-    badinactvity = TIMEOUT
-    mapmutex.acquire()
-    for session_uid in map:
-        if map[session_uid]['name'] == name:
+    badinactivity = TIMEOUT
+    MAPMUTEX.acquire()
+    for session_uid in MAP:
+        if MAP[session_uid]['name'] == name:
             session = Session.query.get(session_uid)
             inactivity = session.inactivity()
             if inactivity > badinactivity:
                 bad = session_uid
                 badinactivity = inactivity
-    mapmutex.release()
+    MAPMUTEX.release()
     if bad is not None:
         release(bad, current)
         return True
@@ -134,26 +134,27 @@ def releaseoldestexpiredsession(name, current):
 
 def cleanexpiredsoftsessions(current):
     expired = []
-    mapmutex.acquire()
-    for session_uid in map:
-        if not map[session_uid]['hard']:
+    MAPMUTEX.acquire()
+    for session_uid in MAP:
+        if not MAP[session_uid]['hard']:
             session = Session.query.get(session_uid)
             if session.inactivity() > TIMEOUT:
                 expired.append(session)
             else:
-                print "leaving session with inactivity below timeout: %s" % session.inactivity()
-    mapmutex.release()
+                print "leaving session with inactivity below timeout: %s" \
+                    % session.inactivity()
+    MAPMUTEX.release()
     print "cleaning %d sessions" % len(expired)
     for session in expired:
         release(session, current)
-    print "%d active sessions remaining" % len(map)
+    print "%d active sessions remaining" % len(MAP)
 
 def release(session, current):
-    impl = map[session.uid]
-    del map[session.uid]
+    impl = MAP[session.uid]
+    del MAP[session.uid]
     session.closedby = current
     # call the release function from the pool
-    for i in pool:
+    for i in POOL:
         if i['name'] == impl['name']:
             i['release'](session)
 
@@ -168,31 +169,30 @@ def instanciateimpl(impl, session):
     return implinst
 
 def acquire(session):
+    print "acquire (%d)" % session.uid
     free = []
-    for impl in pool:
+    for impl in POOL:
         if impl['hard']:
-            if impl['free']():
+            if (releaseoldestexpiredsession(impl['name'], session) or
+                impl['free']()):
                 free.append(impl)
-            else:
-                if releaseoldestexpiredsession(impl['name'], session):
-                    free.append(impl)
         else:
             free.append(impl)
 
     
-    if len(map) > THRESHOLD:
+    if len(MAP) > THRESHOLD:
         cleanexpiredsoftsessions(session)
     
     if len(free) != 0:
         impl = random.choice(free)
 
     implinst = instanciateimpl(impl, session)
-    mapmutex.acquire()
-    map[session.uid]  = {}
-    map[session.uid]['inst'] = implinst
-    map[session.uid]['name'] = impl['name']
-    map[session.uid]['hard'] = impl['hard']
-    mapmutex.release()
+    MAPMUTEX.acquire()
+    MAP[session.uid]  = {}
+    MAP[session.uid]['inst'] = implinst
+    MAP[session.uid]['name'] = impl['name']
+    MAP[session.uid]['hard'] = impl['hard']
+    MAPMUTEX.release()
     return implinst
 
 def get(session):

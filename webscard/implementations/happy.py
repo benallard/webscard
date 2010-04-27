@@ -1,4 +1,4 @@
-class Implementation:
+class Implementation(object):
 
     readername = "Happy Reader 0"
     protocol = 2

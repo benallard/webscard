@@ -193,7 +193,7 @@ def releasecontext(request, context):
 # our SOAP interface
 @expose('/soap/v<int:version>')
 def soapv(request, version):
-    method = getattr(soap, 'v%d' % version)
+    method = getattr(soap, 'version%d' % version)
     return method(request)
 
 # name it differenty to avoid it being checked by the validator

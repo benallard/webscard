@@ -10,12 +10,12 @@ from smartcard import scard as pyscard
 
 from webscard.utils import application
 
-list = []
+LIST = []
 
-initialized = False
+initialized = []
 
 # reader : session_uid
-taken = {}
+TAKEN = {}
 
 # sessions already served
 served = []
@@ -23,8 +23,8 @@ served = []
 def isfree():
     if not initialized:
         return True
-    for reader in list:
-        if reader not in taken:
+    for reader in LIST:
+        if reader not in TAKEN:
             return True
     print "No reader free"
     return False
@@ -34,39 +34,40 @@ def acquire(session):
     return Implementation(session)
 
 def release(session):
-    newtaken = {}
-    for reader in taken:
-        if not taken[reader] == session.uid:
-            newtaken[reader] = taken[reader]
-    taken = newtaken
+    for reader in TAKEN:
+        if TAKEN[reader] == session.uid:
+            del TAKEN[reader]
     served.remove(session.uid)
             
 
 def _filterreaders(uid, readers):
     cfg = application.config
-    initialized = True
-    list = readers
+    initialized.append(True)
+    for reader in LIST:
+        del LIST[reader]
+    for reader in readers:
+        LIST.append(reader)
     limit = cfg.getinteger('clusterpyscard.limit', 1)
     contextreaders = []
     if uid in served:
         for reader in readers:
-            if taken.get(reader) == uid:
+            if TAKEN.get(reader) == uid:
                 contextreaders.append(reader)
     else:
         free = []
         for reader in readers:
-            if reader not in taken:
+            if reader not in TAKEN:
                 free.append(reader)
         contextreaders = random.sample(free, limit)
         for reader in contextreaders:
-            taken[reader] = uid
+            TAKEN[reader] = uid
         served.append(uid)
     return contextreaders
 
 
 def _connect(uid, reader):
-    if not taken.get(reader) == uid:
-        print "uid is %d != %d" % (uid, taken.get(reader))
+    if not TAKEN.get(reader) == uid:
+        print "uid is %d != %d" % (uid, TAKEN.get(reader))
         # Hep ! Reader does not exists
         reader = "--%s--" % reader
     return reader

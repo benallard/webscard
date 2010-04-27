@@ -3,26 +3,26 @@ import inspect
 
 from webscard.models import operation
 
-record = {}
+RECORD = {}
 
 def loginput(hContext, **params):
     if 'time' not in params:
-         params['time'] = datetime.now()
+        params['time'] = datetime.now()
     # get the caller name from the stack
     function = inspect.stack()[1][3]
     opclass = operation.getclassfor(function)
     op = opclass(function, hContext, **params)
     params['time'] = str(params['time'])
     try:
-         handlerec = record[hContext.uid]
+        handlerec = RECORD[hContext.uid]
     except KeyError:
-         handlerec = record[hContext.uid] = []     
+        handlerec = RECORD[hContext.uid] = []
     handlerec.append({function:{'input': params}})
     return op.uid
 
 def logoutput(opuid, hresult, **params):
     if 'time' not in params:
-         params['time'] = datetime.now()
+        params['time'] = datetime.now()
     function = inspect.stack()[1][3]
     opclass = operation.getclassfor(function)
     op = opclass.query.get(opuid)
@@ -32,23 +32,24 @@ def logoutput(opuid, hresult, **params):
     params['hresult'] = hresult
 
     index = -1
-    current = record[op.context_uid][index]
+    current = RECORD[op.context_uid][index]
     while not function in current:
-         index -= 1
-         if index == -len(record[op.context_uid]):
-              raise KeyError(index)
-         current = record[op.context_uid][index]
+        index -= 1
+        if index == -len(RECORD[op.context_uid]):
+            raise KeyError(index)
+        current = RECORD[op.context_uid][index]
 
     current = current[function]
     current['output'] = params
-    current['duration'] = current['output']['time']+ " - " +current['input']['time'] + "(ask the db)"
+    current['duration'] = current['output']['time'] + " - " \
+        +current['input']['time'] + "(ask the db)"
 
 
 def getlogsfor(context):
-    return record[context]
+    return RECORD[context]
 
 def getlogsfromdbfor(context):
-     log = []
-     for op in context.operations:
-          log.append(op.asdict())
-     return log
+    log = []
+    for op in context.operations:
+        log.append(op.asdict())
+    return log

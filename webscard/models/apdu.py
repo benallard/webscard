@@ -3,12 +3,12 @@ from sqlalchemy.orm import mapper
 
 from webscard.utils import dbsession, metadata, hexlikeiwant
 
-def stringify(bytes):
+def stringify(bytesarr):
     """
     >>> stringify([0,3, 66])
     '00 03 42'
     """
-    return ' '.join(map(hexlikeiwant, bytes))
+    return ' '.join(map(hexlikeiwant, bytesarr))
 
 apdu_table = Table('apdus', metadata,
     Column("uid", Integer, primary_key=True),
@@ -29,13 +29,13 @@ apdu_table = Table('apdus', metadata,
 class APDU(object):
     query = dbsession.query_property()
 
-    def __init__(self, operation, bytes):
+    def __init__(self, operation, bytesarr):
         self.operation_uid = operation.uid
-        self.command = bytes
+        self.command = bytesarr
         dbsession.add(self)
 
-    def received(self, bytes):
-        response = bytes
+    def received(self, bytesarr):
+        response = bytesarr
         if (len(self.command) == 4) and (len(response) == 2):
             self.type = 1
             self.cla, self.ins, self.P1, self.P2 = self.command
