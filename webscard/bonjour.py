@@ -31,14 +31,16 @@ def register(port, implementations):
     for imp in implementations:
         txt += ns(imp)
     for i in range(len(REGTYPE)):
-        REFS.append(pybonjour.DNSServiceRegister(
+        sdRef = pybonjour.DNSServiceRegister(
                 name = NAME,
                 regtype = "_%s._tcp" % REGTYPE[i],
                 port = port,
                 callBack = _register_callback,
-                txtRecord = txt))
+                txtRecord = txt)
 
-        pybonjour.DNSServiceProcessResult(REFS[i])
+        pybonjour.DNSServiceProcessResult(sdRef)
+
+        REFS.append(sdRef)
 
 def finalize():
     """
@@ -46,4 +48,5 @@ def finalize():
     They get cleaned by the garbage collector ...
     """
     for conn in REFS:
+        REFS.remove(conn)
         conn.close()

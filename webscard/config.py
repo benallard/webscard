@@ -31,7 +31,6 @@ class Config(SafeConfigParser):
         self.set('clusterscard', 'free', 'isfree')
         self.set('clusterscard', 'acquire', 'acquire')
         self.set('clusterscard', 'release', 'release')
-        
 
     def getstring(self, item, default=""):
         section, option = item.split('.')
