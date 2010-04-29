@@ -1,12 +1,9 @@
-import string
-import random
-
 from sqlalchemy import create_engine
 from werkzeug import ClosingIterator
 from werkzeug.exceptions import NotFound
 
 
-from webscard.utils import dbsession, local, local_manager, metadata ,url_map, Exception2JSON, render
+from webscard.utils import dbsession, local, local_manager, metadata, url_map
 from webscard import views, bonjour
 
 from webscard.models import handle, session, operation, apdu
@@ -26,9 +23,7 @@ class WebSCard(object):
         if db_uri == "sqlite:///:memory:":
             print "init db"
             self.init_database()
-        self.secret_key = config.getstring('cookies.secret', 
-                                           "".join([random.choice(string.letters)
-                                                    for i in range(20)]))
+        self.secret_key = config.getcookiesecret()
         chooser.initialize()
         bonjour.register(config.getport(), config.getimplementations())
 
@@ -43,18 +38,19 @@ class WebSCard(object):
     def getresponse(self, request):
         try:
             endpoint, values = local.url_adapter.match()
-        except NotFound, e:
-            return e
+        except NotFound, expt:
+            return expt
 
         handler = getattr(views, endpoint)
         response = None
         if self.config.getbool('internal.sessioncheck', True):
-            response = request.validatesession(**values)
+            response = request.validatesession(values)
         if response is None:
-            response = handler(request, **values)
+            response = handler(request, values)
 
         request.storesession(response)
         return response
 
     def init_database(self):
+        """ This create the database, Need to find a way to update it also """
         metadata.create_all(self.database_engine)

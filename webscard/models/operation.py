@@ -1,6 +1,6 @@
 from sqlalchemy import Table, Column, Integer, Float, DateTime, String
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import mapper, relation, backref
+from sqlalchemy.orm import mapper, relation
 
 from webscard.utils import dbsession, metadata
 
@@ -34,6 +34,7 @@ class Operation(object):
             duration.seconds + duration.microseconds * 1e-6
 
     def asdict(self):
+        """ For JSON formating """
         res = {}
         res['name'] = self.name
         res['duration'] = self.duration

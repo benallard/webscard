@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey
+from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import mapper, relation
 from webscard.utils import dbsession, metadata
 

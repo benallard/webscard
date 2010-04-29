@@ -1,19 +1,19 @@
+"""
+Publishing the service via Bonjour (ZeroConf))
+"""
+
 try:
     import pybonjour
 except: # WindowsError on Windows
     pybonjour = None
 
-import select
-
-from webscard.utils import application
-
-name = "WebSCard"
-regtype = [
+NAME = "WebSCard"
+REGTYPE = [
     "http", # Our HTTP interface
     "smartcard-http", # SmartCard via HTTP
 ]
 
-sdRef = []
+REFS = []
 
 def _register_callback(sdRef, flags, errorCode, name, regtype, domain):
     if errorCode == pybonjour.kDNSServiceErr_NoError:
@@ -30,17 +30,23 @@ def register(port, implementations):
     txt += ns("protovers=1")
     for imp in implementations:
         txt += ns(imp)
-    for i in range(len(regtype)):
-        sdRef.append(pybonjour.DNSServiceRegister(
-                name = name,
-                regtype = "_%s._tcp" % regtype[i],
+    for i in range(len(REGTYPE)):
+        sdRef = pybonjour.DNSServiceRegister(
+                name = NAME,
+                regtype = "_%s._tcp" % REGTYPE[i],
                 port = port,
                 callBack = _register_callback,
-                txtRecord = txt))
+                txtRecord = txt)
 
-        pybonjour.DNSServiceProcessResult(sdRef[i])
+        pybonjour.DNSServiceProcessResult(sdRef)
 
-# Hmm, that one is tricky as anyway, they get cleaned by the garbage collector ...
+        REFS.append(sdRef)
+
 def finalize():
-    for conn in sdRef:
+    """
+    That one is tricky as anyway,
+    They get cleaned by the garbage collector ...
+    """
+    for conn in REFS:
+        REFS.remove(conn)
         conn.close()

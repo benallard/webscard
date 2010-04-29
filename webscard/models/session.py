@@ -1,17 +1,22 @@
+"""
+This is for HTTP session storage in database
+"""
+
 from datetime import datetime
 
-from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import mapper, relation, relationship, backref
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import mapper, relation, backref
 
 from werkzeug import cached_property
 
-from webscard.utils import dbsession, metadata, application
+from webscard.utils import dbsession, metadata
 from webscard.models.handle import Context, Handle
 from webscard.implementations import chooser
 
 from smartcard.scard import SCARD_E_INVALID_HANDLE, SCARD_E_INVALID_PARAMETER
 
-session_table = Table('sessions', metadata,
+SESSION_TABLE = Table('sessions', metadata,
     Column('uid', Integer, primary_key=True),
     Column('user_agent', Text),
     Column('remote_addr', String(15)),
@@ -29,35 +34,38 @@ class Session(object):
         self.user_agent = request.headers.get('User-Agent')
         self.remote_addr = request.remote_addr
         self.firstactivity = datetime.now()
+        self.lastactivity = None
         self.update()
         dbsession.add(self)
         dbsession.flush()
         self.impl = chooser.acquire(self)
 
-    def validatecontext(self, context):
-        hContext = Context.query.get(context)
-        if hContext is None:
-            return {'message': "Context %d does not exists" % context,
+    def validatecontext(self, context_uid):
+        """ Does the context belong to this session """
+        context = Context.query.get(context_uid)
+        if context is None:
+            return {'message': "Context %d does not exists" % context_uid,
                     'hresult': SCARD_E_INVALID_PARAMETER}
-        if hContext not in self.contexts:
+        if context not in self.contexts:
             return {'message': "Current session #%d is not #%d where the" \
                         " context has been aquired" % (self.uid,
-                                                       hContext.session.uid),
+                                                       context.session.uid),
                     'hresult': SCARD_E_INVALID_PARAMETER}
         return None
 
-    def validatehandle(self, handle):
-        hHandle = Handle.query.get(handle)
-        if hHandle is None:
+    def validatehandle(self, handle_uid):
+        """ Does the SCARDHANDLE belong to that session """
+        handle = Handle.query.get(handle_uid)
+        if handle is None:
             return {'message': "Handle %d never seen" % handle,
                     'hresult': SCARD_E_INVALID_HANDLE}
         res = False
-        for hContext in self.contexts:
-            if hHandle in hContext.handles:
+        for context in self.contexts:
+            if handle in context.handles:
                 res = True
         if not res:
             return {'message': "Current handle #%d does not belong to any " \
-                        "context opened in this session #%d" % (hHandle.uid,
+                        "context opened in this session #%d" % (handle.uid,
                                                                 self.uid),
                     'hresult': SCARD_E_INVALID_HANDLE}
         return None
@@ -74,9 +82,11 @@ class Session(object):
         self.lastactivity = datetime.now()
 
     def inactivity(self):
+        """ How long did the session has been inactive """
         return datetime.now() - self.lastactivity
 
     def asdict(self):
+        """ Used for JSON formatting """
         res = {}
         res['uid'] = self.uid
         res['user_agent'] = self.user_agent
@@ -84,14 +94,15 @@ class Session(object):
         res['firstactivity'] = str(self.firstactivity)
         res['inactivity'] = str(self.inactivity())
         res['contexts'] = []
-        for c in self.contexts:
-            res['contexts'].append(c.uid)
+        for context in self.contexts:
+            res['contexts'].append(context.uid)
         if self.closedby_uid is not None:
             res['closed_by'] = self.closedby_uid
         return res
 
-mapper(Session, session_table, properties={
+mapper(Session, SESSION_TABLE, properties={
     'contexts': relation(Context, backref='session'),
     # adjency list pattern
-    'hasclosed': relation(Session, backref=backref('closedby', remote_side=[session_table.c.uid])),
+    'hasclosed': relation(Session, backref=backref(
+                'closedby', remote_side=[SESSION_TABLE.c.uid])),
 })

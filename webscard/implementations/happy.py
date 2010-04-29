@@ -1,8 +1,11 @@
-class Implementation:
+class Happy(object):
 
     readername = "Happy Reader 0"
     protocol = 2
     ATR = [0x3B, 0x00]
+
+    def __init__(self, name, config):
+        self.name = name
 
     def SCardEstablishContext(self, dwScope):
         return 0, 0
