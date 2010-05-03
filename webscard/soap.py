@@ -63,7 +63,7 @@ def version1(request):
             shared = int(opelem.get("dwShared", "2"))
             prot = int(opelem.get("dwPreferredProtocol", 3))
             hresult, card, activeprot = op(context, readername, shared, prot)
-            SubElement(res,'operation', name=name, hresult=str(hresult), 
+            SubElement(res, 'operation', name=name, hresult=str(hresult), 
                        card=str(card), activeprot=str(activeprot))
             if shouldexit(hresult, opelem):
                 break
