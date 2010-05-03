@@ -2,15 +2,10 @@ import imp, os, random
 
 import ConfigParser
 
-from datetime import timedelta
-
 from webscard.utils import application
 
-from webscard.implementations import MAP, MAPMUTEX
+from webscard.implementations import MAP, MAPMUTEX, POOL
 
-TIMEOUT = timedelta(minutes = 5)
-
-THRESHOLD = 20
 
 def createimpl(name):
     cfg = application.config
@@ -106,21 +101,10 @@ def getmodulefor(name):
     print "mod is %s" % mod
     return mod
 
-POOL = []
 def initialize():
     impls =  application.config.getimplementations()
     for implname in impls:
         POOL.append(createimpl(implname))
-
-
-def release(session, current):
-    impl = MAP[session.uid]
-    del MAP[session.uid]
-    session.closedby = current
-    # call the release function from the pool
-    for i in POOL:
-        if i['name'] == impl['name']:
-            i['release'](session)
 
 def instanciateimpl(impl, session):
     if impl['hard']:
@@ -137,15 +121,11 @@ def acquire(session):
     free = []
     for impl in POOL:
         if impl['hard']:
-            if (releaseoldestexpiredsession(impl['name'], session) or
-                impl['free']()):
+            if impl['free']():
                 free.append(impl)
         else:
             free.append(impl)
 
-    
-    if len(MAP) > THRESHOLD:
-        cleanexpiredsoftsessions(session)
     
     if len(free) != 0:
         impl = random.choice(free)
