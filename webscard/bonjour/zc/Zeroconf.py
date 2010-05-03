@@ -1414,11 +1414,10 @@ class Zeroconf(object):
 		while i < 3:
 			for record in self.cache.entriesWithName(info.type):
 				if record.type == _TYPE_PTR and not record.isExpired(now) and record.alias == info.name:
-					if (info.name.find('.') < 0):
-						info.name = info.name + ".[" + info.address + ":" + info.port + "]." + info.type
-						self.checkService(info)
-						return
-					raise NonUniqueNameException
+					namename  = info.name[:-(len(info.type) + 1)]
+					info.name = namename + "(2)." + info.type
+					self.checkService(info)
+					return
 			if now < nextTime:
 				self.wait(nextTime - now)
 				now = currentTimeMillis()

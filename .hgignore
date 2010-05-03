@@ -1,8 +1,12 @@
 syntax:glob
 werkzeug
+sqlalchemy
+cherrypy/*
 *.pyc
+.DS_Store
 glob:luaclient/*.dll
 glob:*~
 glob:webscard.cfg
 glob:build/*
+glob:cherrypy/*
 glob:dist/*

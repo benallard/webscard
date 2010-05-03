@@ -1,35 +1,19 @@
-"""
-Publishing the service via Bonjour (ZeroConf))
-"""
+import pybonjour
 
-try:
-    import pybonjour
-except: # WindowsError on Windows
-    pybonjour = None
+from webscard.bonjour import REGTYPE, NAME
 
-NAME = "WebSCard"
-REGTYPE = [
-    "http", # Our HTTP interface
-    "smartcard-http", # SmartCard via HTTP
-]
-
-REFS = []
+PYBJ_REFS = []
 
 def _register_callback(sdRef, flags, errorCode, name, regtype, domain):
-    if errorCode == pybonjour.kDNSServiceErr_NoError:
-        print 'Registered service: %s' % regtype
-    else:
-        print "Error while registrating : %d" % errorCode
+    pass
 
-ns = lambda s: "%c%s" % (len(s), s)
 
 def register(port, implementations):
-    if pybonjour == None:
-        return
+    ns = lambda s: "%c%s" % (len(s), s)
     txt = ns("txtvers=1")
     txt += ns("protovers=1")
     for imp in implementations:
-        txt += ns(imp)
+        txt += ns("%s=true" % imp)
     for i in range(len(REGTYPE)):
         sdRef = pybonjour.DNSServiceRegister(
                 name = NAME,
@@ -40,13 +24,13 @@ def register(port, implementations):
 
         pybonjour.DNSServiceProcessResult(sdRef)
 
-        REFS.append(sdRef)
+        PYBJ_REFS.append(sdRef)
 
 def finalize():
     """
     That one is tricky as anyway,
     They get cleaned by the garbage collector ...
     """
-    for conn in REFS:
-        REFS.remove(conn)
+    for conn in PYBJ_REFS:
+        PYBJ_REFS.remove(conn)
         conn.close()
