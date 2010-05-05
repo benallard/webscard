@@ -15,7 +15,7 @@ class Config(SafeConfigParser):
                                       for i in range(20)])
 
     def addhardcodedvalues(self):
-        """ Those are not for default values, but for constant values """
+        """ Those are constant values, not default ones """
         try:
             self.add_section('web')
         except DuplicateSectionError:

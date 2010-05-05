@@ -52,9 +52,11 @@ class PyCSC(object):
         return self.reader.Connect(dwShared, dwProtocol)
 
     def SCardDisconnect(self, hCard, dwDisposition):
+        """ delegate to reader """
         return self.reader.Disconnect(hCard, dwDisposition)
 
     def SCardReconnect(self, hCard, dwSharedMode, dwPreferredProtocols, dwInitialisations):
+        """ delegate to reader """
         return self.reader.Reconnect(hCard, dwSharedMode, dwPreferredProtocols)
 
     def SCardCancel(self, hContext):

@@ -10,7 +10,7 @@ class Reader(object):
     def __init__(self, name, config):
         self.protocol = config.getinteger('%s.protocol' % name, 2)
         self.cards = {}
-        self.LockedBy = 0
+        self.lockedby = 0
 
     def Connect(self, share, protocols):
         card = random.randint(1, 0xffff)
@@ -23,13 +23,13 @@ class Reader(object):
         else:
             return scard.SCARD_E_INVALID_PARAMETER, 0, 0
 
-        if self.LockedBy != 0:
+        if self.lockedby != 0:
             return scard.SCARD_E_READER_UNAVAILABLE, 0, 0
 
         if share in (scard.SCARD_SHARE_EXCLUSIVE, scard.SCARD_SHARE_DIRECT):
             if len(self.cards) != 0:
                 return scard.SCARD_E_READER_UNAVAILABLE, 0, 0
-            self.LockedBy = card
+            self.lockedby = card
 
         self.cards[card] = protocol
         return scard.SCARD_S_SUCCESS, card, protocol
@@ -37,10 +37,20 @@ class Reader(object):
     def Disconnect(self, card, disposition):
         if card not in self.cards:
             return scard.SCARD_E_INVALID_HANDLE
-        if self.LockedBy == card:
-            self.LockedBy = 0
+        if self.lockedby == card:
+            self.lockedby = 0
         del self.cards[card]
         return scard.SCARD_S_SUCCESS
 
     def Reconnect(self, card, share, protocols, initialisations):
-        pass
+        res = self.Disconnect(card, initialisations)
+        if res != scard.SCARD_S_SUCCESS:
+            return res, 0
+        (res, tempcard, prot) = self.Connect(share, protocols)
+        if res != scard.SCARD_S_SUCCESS:
+            return res, prot
+        self.cards[card] = self.cards[tempcard]
+        del self.cards[tempcard]
+        if self.lockedby == tempcard:
+            self.lockedby = card
+        return res, prot
