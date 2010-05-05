@@ -2,12 +2,15 @@ import random
 
 from smartcard import scard # for constants
 
+from webscard.implementations.pycsc.token import Token
+
 def flag_set(flag, flags):
     return flag == flag & flags
 
 class Reader(object):
     name = "PyC/SC Reader 0"
     def __init__(self, name, config):
+        self.token = Token(name, config)
         self.protocol = config.getinteger('%s.protocol' % name, 2)
         self.cards = {}
         self.lockedby = 0

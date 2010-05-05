@@ -1,13 +1,14 @@
 """
 PyC/SC is a complete Python implementation of the SubSystem
 
-I guess it has dependencies on pythoncard to use applets
+This only manage Contexts and make some parameter checking.
+
+All the rest is delegated to the reader.
 
 """
 import random
 
 from webscard.implementations.pycsc.reader import Reader
-from webscard.implementations.pycsc.token import Token
 
 from smartcard import scard # for error values
 
@@ -17,7 +18,6 @@ class PyCSC(object):
         self.name = name
         self.config = config
         self.reader = Reader(name, config)
-        self.token = Token(name, config)
         self.name = name
         self.contexts = []
 
