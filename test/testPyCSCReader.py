@@ -10,6 +10,8 @@ class testPyCSCReader(unittest.TestCase):
     
     def setUp(self):
         cfg = config.Config()
+        cfg.add_section('pycsc')
+        cfg.set('pycsc', 'ATR', '3B 00 00')
         self.reader = Reader('pycsc', cfg)
 
     def testHandle(self):
@@ -85,7 +87,52 @@ class testPyCSCReader(unittest.TestCase):
                                             scard.SCARD_LEAVE_CARD)
         self.assertEquals(scard.SCARD_S_SUCCESS, res)
         self.assertEquals(scard.SCARD_S_SUCCESS,
-                         self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
+                          self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
+
+    def testTransactionsOneThread(self):
+        (res, card, prot) = self.reader.Connect(scard.SCARD_SHARE_SHARED,
+                                                scard.SCARD_PROTOCOL_T1)
+        self.assertEquals(scard.SCARD_S_SUCCESS, res)
+
+        self.assertEquals(scard.SCARD_E_NOT_TRANSACTED,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.BeginTransaction(card))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.BeginTransaction(card))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.BeginTransaction(card))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+        self.assertEquals(scard.SCARD_E_NOT_TRANSACTED,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.BeginTransaction(card))
+        (res, prot) = self.reader.Reconnect(card, scard.SCARD_SHARE_SHARED,
+                                            scard.SCARD_PROTOCOL_T1,
+                                            scard.SCARD_LEAVE_CARD)
+        self.assertEquals(scard.SCARD_S_SUCCESS, res)
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.BeginTransaction(card))
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+        self.assertEquals(scard.SCARD_E_NOT_TRANSACTED,
+                          self.reader.EndTransaction(card,
+                                                     scard.SCARD_LEAVE_CARD))
+
+        self.assertEquals(scard.SCARD_S_SUCCESS,
+                          self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
         
 
     def testFlagFunc(self):

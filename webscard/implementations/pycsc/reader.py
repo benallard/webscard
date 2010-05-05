@@ -1,4 +1,4 @@
-import random
+import random, threading
 
 from smartcard import scard # for constants
 
@@ -14,6 +14,8 @@ class Reader(object):
         self.protocol = config.getinteger('%s.protocol' % name, 2)
         self.cards = {}
         self.lockedby = 0
+        # reentrant to authorize nested transactions
+        self.transaction = threading.RLock()
 
     def Connect(self, share, protocols):
         card = random.randint(1, 0xffff)
@@ -42,6 +44,7 @@ class Reader(object):
             return scard.SCARD_E_INVALID_HANDLE
         if self.lockedby == card:
             self.lockedby = 0
+        self.releasetransactionlock()
         del self.cards[card]
         return scard.SCARD_S_SUCCESS
 
@@ -57,3 +60,27 @@ class Reader(object):
         if self.lockedby == tempcard:
             self.lockedby = card
         return res, prot
+
+    def BeginTransaction(self, card):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE
+        self.transaction.acquire()
+        return scard.SCARD_S_SUCCESS
+
+    def EndTransaction(self, card, disposition):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE
+        res = scard.SCARD_E_NOT_TRANSACTED
+        try:
+            self.transaction.release()
+            res = scard.SCARD_S_SUCCESS
+        except RuntimeError:
+            # res is alread set
+            pass
+        return res
+
+    def releasetransactionlock(self):
+        try:
+            while True: self.transaction.release()
+        except RuntimeError:
+            pass

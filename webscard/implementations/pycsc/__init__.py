@@ -59,26 +59,29 @@ class PyCSC(object):
         """ delegate to reader """
         return self.reader.Reconnect(hCard, dwSharedMode, dwPreferredProtocols)
 
+    def SCardBeginTransaction(self, hCard):
+        return self.reader.BeginTransaction(hCard)
+
+    def SCardEndTransaction(self, hCard, dwDisposition):
+        return self.reader.EndTransaction(hCard, dwDisposition)
+
+    def SCardStatus(self, hCard):
+        return self.reader.Status(hCard)
+
+    def SCardGetStatusChange(self, hContext, dwTimeout, rgReaderStates):
+        if hContext not in self.contexts:
+            return scard.SCARD_E_INVALID_HANDLE
+        return 0
+
     def SCardCancel(self, hContext):
         if hContext not in self.contexts:
             return scard.SCARD_E_INVALID_HANDLE
         return 0
 
-    def SCardGetStatusChange(self, hContext, dwTimeout, rgReaderStates):
-        return 0
-
     def SCardControl(self, hCard, dwControlCode, inBuffer):
         pass
-
-    def SCardStatus(self, hCard):
-        return self.reader.Status(hCard)
-
-    def SCardBeginTransaction(self, hCard):
-        return 0
 
     def SCardTransmit(self, hCard, dwProtocol, apdu):
         return 0, [0x90, 0x00]
 
-    def SCardEndTransaction(self, hCard, dwDisposition):
-        return 0
 
