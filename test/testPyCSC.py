@@ -23,3 +23,5 @@ class testPyCSC(unittest.TestCase):
                           self.pycsc.SCardReleaseContext(context))
         self.assertEquals(scard.SCARD_E_INVALID_HANDLE,
                           self.pycsc.SCardReleaseContext(context))
+        self.assertEquals((scard.SCARD_E_INVALID_HANDLE, []),
+                          self.pycsc.SCardListReaders(context, []))
