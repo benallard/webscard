@@ -1,4 +1,4 @@
-import unittest
+import unittest, threading, time
 
 from smartcard import scard # for constants
 
@@ -89,7 +89,7 @@ class testPyCSCReader(unittest.TestCase):
         self.assertEquals(scard.SCARD_S_SUCCESS,
                           self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
 
-    def testTransactionsOneThread(self):
+    def testTransactionsOneCard(self):
         (res, card, prot) = self.reader.Connect(scard.SCARD_SHARE_SHARED,
                                                 scard.SCARD_PROTOCOL_T1)
         self.assertEquals(scard.SCARD_S_SUCCESS, res)
@@ -134,6 +134,32 @@ class testPyCSCReader(unittest.TestCase):
         self.assertEquals(scard.SCARD_S_SUCCESS,
                           self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
         
+
+    def testTransactionTwoCards(self):
+
+        def transact(depth):
+            (res, card, prot) = self.reader.Connect(scard.SCARD_SHARE_SHARED,
+                                                    scard.SCARD_PROTOCOL_T1)
+            self.assertEquals(scard.SCARD_S_SUCCESS, res)
+
+            if depth > 0:
+                thread = threading.Thread(target=transact, args=[depth-1])
+                thread.start()
+
+            self.assertEquals(scard.SCARD_S_SUCCESS,
+                              self.reader.BeginTransaction(card))
+            if depth > 0:
+                # simulate we do something inside the transacion
+                time.sleep(0.1)
+            self.assertEquals(scard.SCARD_S_SUCCESS,
+                              self.reader.EndTransaction(card,
+                                                         scard.SCARD_LEAVE_CARD))
+            if depth > 0:
+                thread.join()
+            self.assertEquals(scard.SCARD_S_SUCCESS,
+                              self.reader.Disconnect(card, scard.SCARD_LEAVE_CARD))
+
+        transact(5)
 
     def testFlagFunc(self):
         self.assertTrue(flag_set(1, 3))

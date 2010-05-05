@@ -15,7 +15,7 @@ class Reader(object):
         self.cards = {}
         self.lockedby = 0
         # reentrant to authorize nested transactions
-        self.transaction = threading.RLock()
+        self.transaction = CardRLock()
 
     def Connect(self, share, protocols):
         card = random.randint(1, 0xffff)
@@ -44,7 +44,7 @@ class Reader(object):
             return scard.SCARD_E_INVALID_HANDLE
         if self.lockedby == card:
             self.lockedby = 0
-        self.releasetransactionlock()
+        self.transaction.reset()
         del self.cards[card]
         return scard.SCARD_S_SUCCESS
 
@@ -64,23 +64,42 @@ class Reader(object):
     def BeginTransaction(self, card):
         if card not in self.cards:
             return scard.SCARD_E_INVALID_HANDLE
-        self.transaction.acquire()
+        self.transaction.acquire(card)
         return scard.SCARD_S_SUCCESS
 
     def EndTransaction(self, card, disposition):
         if card not in self.cards:
             return scard.SCARD_E_INVALID_HANDLE
         res = scard.SCARD_E_NOT_TRANSACTED
-        try:
-            self.transaction.release()
+        if self.transaction.release(card):
             res = scard.SCARD_S_SUCCESS
-        except RuntimeError:
-            # res is alread set
-            pass
         return res
 
-    def releasetransactionlock(self):
-        try:
-            while True: self.transaction.release()
-        except RuntimeError:
-            pass
+
+class CardRLock(object):
+    """ A kind of RLock, but based on hCard instead of thread """
+    def __init__(self):
+        self.counter = 0
+        self.hCard = None
+        self.lock = threading.Lock()
+
+    def acquire(self, hCard):
+        if self.hCard != hCard:
+            self.lock.acquire()
+            self.hCard = hCard
+        self.counter += 1
+
+    def release(self, hCard):
+        if self.hCard != hCard:
+            return False
+        self.counter -= 1
+        if self.counter == 0:
+            self.lock.release()
+            self.hCard = None
+        return True
+
+    def reset(self):
+        if self.counter > 0:
+            self.counter = 0
+            self.hCard = None
+            self.lock.release()
