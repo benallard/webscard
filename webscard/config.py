@@ -6,7 +6,7 @@ import random
 LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 class Config(SafeConfigParser):
-    def __init__(self, file):
+    def __init__(self, file=[]):
         SafeConfigParser.__init__(self)
         self.read(file)
         self.addhardcodedvalues()
