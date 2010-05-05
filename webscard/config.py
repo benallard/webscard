@@ -11,6 +11,8 @@ class Config(SafeConfigParser):
         self.read(file)
         self.addhardcodedvalues()
         self.port = None
+        self.defaultsecret = "".join([random.choice(LETTERS)
+                                      for i in range(20)])
 
     def addhardcodedvalues(self):
         """ Those are not for default values, but for constant values """
@@ -88,5 +90,4 @@ class Config(SafeConfigParser):
     def getcookiesecret(self):
         """ Secret key that secure the sessions inside the cookies """
         return self.getstring('cookies.secret',
-                              "".join([random.choice(LETTERS)
-                                       for i in range(20)]))
+                              self.defaultsecret)
