@@ -15,6 +15,11 @@ class Config(SafeConfigParser):
     def addhardcodedvalues(self):
         """ Those are not for default values, but for constant values """
         try:
+            self.add_section('web')
+        except DuplicateSectionError:
+            pass
+
+        try:
             self.add_section('pyscard')
         except DuplicateSectionError:
             pass
