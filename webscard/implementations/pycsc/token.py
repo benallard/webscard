@@ -3,7 +3,7 @@ This is a Python token, it reprsents a Token + the CardManager
 
 """
 
-from pythoncard.framework import Applet
+from pythoncard.framework import Applet, ISO7816, ISOException, APDU
 
 from webscard.utils import loadpath
 
@@ -59,33 +59,41 @@ class Token(object):
     def _cmselect(self, bytes):
         """ Select According to the Card Manager """
         potential = None
-        threshold = 16
-        for aid in self.applets:
-            if aid.equals(bytes, ISO7816.OFFSET_CDATA, bytes[ISO7816.OFFSET_LC]):
-                potential = self.applets[aid]
-        if potential is not None:
-            if self.selected is not None:
-                self.selected.deselect()
-                self.selected = None
-            if potential.select():
-                self.selected = potential
-        raise ISOException(ISO7816.SW_FILE_NOT_FOUND)
+        threshold = bytes[ISO7816.OFFSET_LC]
+        while (potential == None) and (threshold > 4):
+            for aid in self.applets:
+                if aid.equals(bytes, ISO7816.OFFSET_CDATA,
+                              min(bytes[ISO7816.OFFSET_LC], threshold)):
+                    potential = self.applets[aid]
+            threshold -= 1
+
+        if potential is None:
+            raise ISOException(ISO7816.SW_FILE_NOT_FOUND)
+        if self.selected is not None:
+            self.selected.deselect()
+            self.selected = None
+        if potential.select():
+            potential._selectingApplet = True
+            self.selected = potential
 
     def transmit(self, bytes):
         try:
             apdu = APDU(bytes)
-            if apdu.isISOInterIndustryCLA():
+            # manage the applet selection
+            if self.selected is not None:
+                self.selected._selectingApplet = False
+            if apdu.isISOInterindustryCLA():
+                # We should maybe be more strict on the select Applet APDU
                 if bytes[1] == ISO7816.INS_SELECT:
                     self._cmselect(bytes)
-
-            if self.selected is not None:
-                self.selected.process(apdu)
-                buf = apdu._APDU__buffer[:apdu._outgoinglength]
-                buf.extend([0x90, 0x00])
-                return 0, buf
-            else:
-                return swtotransmitres(ISO7816.SW_APPLET_SELECT_FAILED)
+            if self.selected is None:
+                raise ISOException(ISO7816.SW_APPLET_SELECT_FAILED)
+            self.selected.process(apdu)
         except ISOException, isoe:
             return swtotransmitres(isoe.getReason())
-        except:
+        except Exception, e:
+            # This should probably be a PCSC INTERNAL/GENERAL ERROR
             return swtotransmitres(ISO7816.SW_UNKNOWN)
+        buf = apdu._APDU__buffer[:apdu._outgoinglength]
+        buf.extend([0x90, 0x00])
+        return 0, buf
