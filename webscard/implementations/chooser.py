@@ -2,7 +2,7 @@ import imp, os, random
 
 import ConfigParser
 
-from webscard.utils import application
+from webscard.utils import application, loadpath
 
 from webscard.implementations import MAP, MAPMUTEX, POOL
 
@@ -69,18 +69,6 @@ def createimpl(name):
         res['release'] = releasefunc
 
     return res
-
-def loadpath(path, name):
-    """ taken from mercurial.extensions """
-    name = name.replace('.','_')
-    path = os.path.expanduser(os.path.expandvars(path))
-    if os.path.isdir(path):
-        # module/__init__.py style
-        d, f = os.path.split(path.rstrip(os.path.sep))
-        fd, fpath, desc = imp.find_module(f, [d])
-        return imp.load_module(name, fd, fpath, desc)
-    else:
-        return imp.load_source(name, path)
 
 def getmodulefor(name):
     cfg = application.config

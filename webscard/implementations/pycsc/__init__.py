@@ -65,6 +65,9 @@ class PyCSC(object):
     def SCardEndTransaction(self, hCard, dwDisposition):
         return self.reader.EndTransaction(hCard, dwDisposition)
 
+    def SCardTransmit(self, hCard, dwProtocol, apdu):
+        return self.reader.Transmit(hCard, dwProtocol, apdu)
+    
     def SCardStatus(self, hCard):
         return self.reader.Status(hCard)
 
@@ -80,8 +83,4 @@ class PyCSC(object):
 
     def SCardControl(self, hCard, dwControlCode, inBuffer):
         pass
-
-    def SCardTransmit(self, hCard, dwProtocol, apdu):
-        return 0, [0x90, 0x00]
-
 

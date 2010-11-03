@@ -75,6 +75,10 @@ class Reader(object):
             res = scard.SCARD_S_SUCCESS
         return res
 
+    def Transmit(self, card, protocol, apdubytes):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE, []
+        return self.token.transmit(apdubytes)
 
 class CardRLock(object):
     """ A kind of RLock, but based on hCard instead of thread """
