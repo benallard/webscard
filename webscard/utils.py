@@ -42,7 +42,7 @@ def isabrowser(request):
 def render(request, dct):
     indent = isabrowser(request) and 4 or None
     if isabrowser(request):
-        dict['HRformat'] = SCardGetErrorMessage(dct.get('hresult', 0))
+        dct['HRformat'] = SCardGetErrorMessage(dct.get('hresult', 0))
     return Response(json.dumps(dct, indent=indent, separators=(',', ':')))
 
 def Exception2JSON(e):

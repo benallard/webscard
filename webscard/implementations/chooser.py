@@ -128,4 +128,4 @@ def acquire(session):
     return implinst
 
 def get(session):
-    return map[session.uid]['inst']
+    return MAP[session.uid]['inst']
