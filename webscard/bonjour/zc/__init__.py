@@ -1,4 +1,4 @@
-from webscard.bonjour import Zeroconf
+from webscard.bonjour.zc import Zeroconf
 import socket
 
 from webscard.bonjour import REGTYPE, NAME
