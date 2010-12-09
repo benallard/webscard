@@ -56,6 +56,16 @@ class Token(object):
             self.selected.deselect()
         self.selected = None
 
+    def _cmprocess(self, bytes):
+        """
+        the `process` command of the Card Manager.
+        It can handle for now only SELECT
+        """
+        if (bytes[0] & 0x80) == 0x00:
+            # We should maybe be more strict on the select Applet APDU
+            if bytes[1:3] == [ISO7816.INS_SELECT, 0x04]:
+                self._cmselect(bytes)
+
     def _cmselect(self, bytes):
         """ Select According to the Card Manager """
         potential = None
@@ -78,22 +88,21 @@ class Token(object):
 
     def transmit(self, bytes):
         try:
-            apdu = APDU(bytes)
             # manage the applet selection
             if self.selected is not None:
                 self.selected._selectingApplet = False
-            if apdu.isISOInterindustryCLA():
-                # We should maybe be more strict on the select Applet APDU
-                if bytes[1] == ISO7816.INS_SELECT:
-                    self._cmselect(bytes)
+            self._cmprocess(bytes)
             if self.selected is None:
                 raise ISOException(ISO7816.SW_APPLET_SELECT_FAILED)
+            apdu = APDU(bytes)
             self.selected.process(apdu)
         except ISOException, isoe:
             return swtotransmitres(isoe.getReason())
         except Exception, e:
-            # This should probably be a PCSC INTERNAL/GENERAL ERROR
+            # This is to avoid throwing Exception to the web interface
             return swtotransmitres(ISO7816.SW_UNKNOWN)
+            #return scard.SCARD_F_INTERNAL_ERROR, []
+        
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend([0x90, 0x00])
         return 0, buf
