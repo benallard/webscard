@@ -44,9 +44,9 @@ class WebSCard(object):
         handler = getattr(views, endpoint)
         response = None
         if self.config.getbool('internal.sessioncheck', True):
-            response = request.validatesession(values)
+            response = request.validatesession(**values)
         if response is None:
-            response = handler(request, values)
+            response = handler(request, **values)
 
         request.storesession(response)
         return response
