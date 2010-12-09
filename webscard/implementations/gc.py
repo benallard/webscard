@@ -1,11 +1,36 @@
 """
 Our own garbage collector that tries to cleanup the old sessions
 """
+from datetime import timedelta
 
-from webscard.implementations import MAP, MAPMUTEX
+from webscard.implementations import MAP, MAPMUTEX, POOL
 from webscard.models.session import Session
 
+TIMEOUT = timedelta(minutes = 5)
+THRESHOLD = 20
+
+def run(current):
+    for impl in POOL:
+        if impl['hard']:
+            releaseoldestexpiredsession(impl['name'], current)
+
+    if len(MAP) > THRESHOLD:
+        cleanexpiredsoftsessions(current)
+
+def release(session, current):
+    impl = MAP[session.uid]
+    del MAP[session.uid]
+    session.closedby = current
+    # call the release function from the pool
+    for i in POOL:
+        if i['name'] == impl['name']:
+            i['release'](session)
+
 def releaseoldestexpiredsession(name, current):
+    """
+    This cleanup the oldest expired session, 
+    basically to make space in the MAP
+    """
     bad = None
     badinactivity = TIMEOUT
     MAPMUTEX.acquire()
@@ -23,6 +48,9 @@ def releaseoldestexpiredsession(name, current):
     return False
 
 def cleanexpiredsoftsessions(current):
+    """
+    All the expired soft sessions are cleanup up, this happen upon threshold
+    """
     expired = []
     MAPMUTEX.acquire()
     for session_uid in MAP:

@@ -42,7 +42,7 @@ def isabrowser(request):
 def render(request, dct):
     indent = isabrowser(request) and 4 or None
     if isabrowser(request):
-        dict['HRformat'] = SCardGetErrorMessage(dct.get('hresult', 0))
+        dct['HRformat'] = SCardGetErrorMessage(dct.get('hresult', 0))
     return Response(json.dumps(dct, indent=indent, separators=(',', ':')))
 
 def Exception2JSON(e):
@@ -74,3 +74,16 @@ def hexlikeiwant(b):
     if len(b) == 1:
         b = '0' + b
     return b
+
+def loadpath(path, name):
+    """ taken from mercurial.extensions """
+    name = name.replace('.','_')
+    path = os.path.expanduser(os.path.expandvars(path))
+    if os.path.isdir(path):
+        # module/__init__.py style
+        d, f = os.path.split(path.rstrip(os.path.sep))
+        fd, fpath, desc = imp.find_module(f, [d])
+        return imp.load_module(name, fd, fpath, desc)
+    else:
+        return imp.load_source(name, path)
+

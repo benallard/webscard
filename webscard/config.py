@@ -6,14 +6,21 @@ import random
 LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 class Config(SafeConfigParser):
-    def __init__(self, file):
+    def __init__(self, file=[]):
         SafeConfigParser.__init__(self)
         self.read(file)
         self.addhardcodedvalues()
         self.port = None
+        self.defaultsecret = "".join([random.choice(LETTERS)
+                                      for i in range(20)])
 
     def addhardcodedvalues(self):
-        """ Those are not for default values, but for constant values """
+        """ Those are constant values, not default ones """
+        try:
+            self.add_section('web')
+        except DuplicateSectionError:
+            pass
+
         try:
             self.add_section('pyscard')
         except DuplicateSectionError:
@@ -83,5 +90,4 @@ class Config(SafeConfigParser):
     def getcookiesecret(self):
         """ Secret key that secure the sessions inside the cookies """
         return self.getstring('cookies.secret',
-                              "".join([random.choice(LETTERS)
-                                       for i in range(20)]))
+                              self.defaultsecret)

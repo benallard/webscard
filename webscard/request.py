@@ -75,7 +75,7 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
                 print "Wrong XML"
                 return None
         else:
-            print "Wong headers: %s" % self.headers.get('content-type')
+            print "Wrong headers: %s" % self.headers.get('content-type')
 
     @cached_property
     def soapbody(self):
