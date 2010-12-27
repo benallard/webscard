@@ -37,21 +37,26 @@ class APDU(object):
 
     def received(self, bytesarr):
         response = bytesarr
+        try:
+            P3 = self.command[4]
+        except IndexError:
+            P3 = 0
+            
         if (len(self.command) == 4) and (len(response) == 2):
             self.type = 1
             self.cla, self.ins, self.P1, self.P2 = self.command
             self.SW1, self.SW2 = response
-        elif (len(self.command) == 5) and (len(response) == self.command[4] + 2):
+        elif (len(self.command) == 5) and (len(response) == P3 + 2):
             self.type = 2
             self.cla, self.ins, self.P1, self.P2, self.Le = self.command
             self.data_response = stringify(response[:-2])
             self.SW1, self.SW2 = response[-2:]
-        elif (len (self.command) == self.command[4] + 5) and (len(response) == 2):
+        elif (len (self.command) == P3 + 5) and (len(response) == 2):
             self.type = 3
             self.cla, self.ins, self.P1, self.P2, self.Le = self.command[:5]
             self.data_command = stringify(self.command[5:])
             self.SW1, self.SW2 = response
-        elif (len (self.command) == self.command[4] + 6) and (len(response) == self.command[-1] + 2):
+        elif (len (self.command) == P3 + 6) and (len(response) == self.command[-1] + 2):
             self.type = 4
             self.cla, self.ins, self.P1, self.P2, self.Le = self.command[:5]
             self.data_command = stringify(self.command[5:])

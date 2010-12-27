@@ -46,7 +46,10 @@ def logoutput(opuid, hresult, **params):
 
 
 def getlogsfor(context):
-    return RECORD[context]
+    try:
+        return RECORD[context]
+    except KeyError:
+        return {}
 
 def getlogsfromdbfor(context):
     log = []
