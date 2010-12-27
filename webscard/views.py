@@ -8,7 +8,8 @@ from werkzeug import url_unquote
 
 from webscard import logger, soap
 
-from webscard.utils import expose, render, dbsession, unsigned_long
+from webscard.utils import expose, dbsession, unsigned_long
+from webscard.render import render
 
 from webscard.models.handle import Context, Handle
 from webscard.models.session import Session

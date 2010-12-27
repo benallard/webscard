@@ -6,7 +6,8 @@ from werkzeug import BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin
 from werkzeug import cached_property
 from werkzeug.contrib.securecookie import SecureCookie
 
-from webscard.utils import application, render
+from webscard.render import render
+from webscard.utils import application
 from webscard.models.session import Session
 
 from webscard import soap

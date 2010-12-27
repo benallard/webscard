@@ -2,7 +2,9 @@
 Publishing the service via Bonjour (ZeroConf))
 """
 
-NAME = "WebSCard"
+import socket
+
+NAME = "WebSCard (%s)" % socket.gethostname().split('.')[0]
 REGTYPE = [
     "http", # Our HTTP interface
     "smartcard-http", # SmartCard via HTTP

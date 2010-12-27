@@ -41,6 +41,8 @@ class WebSCard(object):
         except NotFound, expt:
             return expt
 
+        request.endpoint = endpoint
+        request.values = values
         handler = getattr(views, endpoint)
         response = None
         if self.config.getbool('internal.sessioncheck', True):

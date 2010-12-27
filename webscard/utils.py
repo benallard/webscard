@@ -9,13 +9,11 @@ try:
 except ImportError:
     import json
 
-from werkzeug import Local, LocalManager, Response
+from werkzeug import Local, LocalManager
 from werkzeug.routing import Map, Rule
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
-
-from smartcard.scard import SCardGetErrorMessage
 
 local = Local()
 local_manager = LocalManager([local])
@@ -32,25 +30,6 @@ def expose(rule, **kw):
         url_map.add(Rule(rule, **kw))
         return f
     return decorate
-
-def isabrowser(request):
-    try:
-        return "Mozilla" in request.headers['User-Agent']
-    except KeyError:
-        return False
-
-def render(request, dct):
-    indent = isabrowser(request) and 4 or None
-    if isabrowser(request):
-        try:
-            dct['HRformat'] = SCardGetErrorMessage(dct.get('hresult', 0))
-        except AttributeError:
-            pass
-    return Response(json.dumps(dct, indent=indent, separators=(',', ':')))
-
-def Exception2JSON(e):
-    return {'hresult': 0x80100003}
-
 
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
