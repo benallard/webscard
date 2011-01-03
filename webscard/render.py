@@ -1,5 +1,10 @@
 from os import path
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+    
 from jinja2 import Environment, FileSystemLoader
 
 from werkzeug import Response
@@ -39,6 +44,17 @@ class JSONRenderer(object):
 class JinjaRenderer(object):
     def __init__(self, request):
         self.template_name = request.endpoint + ".html"
+        self.request = request
+        self.ctxext = {} #context extension
+        self.ctxext['request'] = request
+
+    def getsuggestions(self):
+        for context in self.request.session.contexts:
+            yield ('/%d/ReleaseContext' % context.uid, "Close an unused context")
+        if self.request.endpoint == 'welcome':
+            yield ('/EstablishContext', "Establish a new context")
 
     def __call__(self, context):
+        context.update(self.ctxext)
+        context['suggestions'] = self.getsuggestions()
         return jinja_environment.get_template(self.template_name).render(context)

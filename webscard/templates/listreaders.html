@@ -1,0 +1,17 @@
+{%extends "operation.html" %}
+{%block title %}ListReaders{% endblock %}
+{%block code %}
+<div class="code">
+  <pre>
+SCardListReaders()
+  </pre>
+</div>
+{% endblock code %}
+{% block output %}
+The readers are
+<ul>
+{% for reader in mszReaders %}
+  <li>{{ reader }}</li>
+{% endfor %}
+</ul>
+{% endblock output %}

@@ -57,7 +57,7 @@ class Session(object):
         """ Does the SCARDHANDLE belong to that session """
         handle = Handle.query.get(handle_uid)
         if handle is None:
-            return {'message': "Handle %d never seen" % handle,
+            return {'message': "Handle %d never seen" % handle_uid,
                     'hresult': SCARD_E_INVALID_HANDLE}
         res = False
         for context in self.contexts:
@@ -84,21 +84,6 @@ class Session(object):
     def inactivity(self):
         """ How long did the session has been inactive """
         return datetime.now() - self.lastactivity
-
-    def asdict(self):
-        """ Used for JSON formatting """
-        res = {}
-        res['uid'] = self.uid
-        res['user_agent'] = self.user_agent
-        res['remote_addr'] = self.remote_addr
-        res['firstactivity'] = str(self.firstactivity)
-        res['inactivity'] = str(self.inactivity())
-        res['contexts'] = []
-        for context in self.contexts:
-            res['contexts'].append(context.uid)
-        if self.closedby_uid is not None:
-            res['closed_by'] = self.closedby_uid
-        return res
 
 mapper(Session, SESSION_TABLE, properties={
     'contexts': relation(Context, backref='session'),

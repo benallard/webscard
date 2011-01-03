@@ -33,15 +33,6 @@ class Operation(object):
         self.duration = duration.days * 86400 + \
             duration.seconds + duration.microseconds * 1e-6
 
-    def asdict(self):
-        """ For JSON formating """
-        res = {}
-        res['name'] = self.name
-        res['duration'] = self.duration
-        res['initiated'] = str(self.initiated)
-        res['result'] = self.result
-        return res
-
 mapper(Operation, operation_table, 
     polymorphic_on=operation_table.c.type, polymorphic_identity='operation',
     properties = {'context': relation(Context, backref='operations')},
@@ -73,6 +64,9 @@ class Status(Operation):
     pass
 
 class ListReaders(Operation):
+    pass
+
+class Connect(Operation):
     pass
 
 classdict = {

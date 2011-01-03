@@ -4,11 +4,6 @@ Mainly taken from the Werkzeug tutorial
 
 import imp, os, sys
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
 from werkzeug import Local, LocalManager
 from werkzeug.routing import Map, Rule
 

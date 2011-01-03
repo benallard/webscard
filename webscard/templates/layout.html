@@ -9,5 +9,33 @@
     <link href="css/style.css" rel="stylesheet" type="text/css" media="screen" />
     <link href="css/ajaxtabs.css" rel="stylesheet" type="text/css" />
   </head>
-  <body>{% block body %}Nothing to declare{%endblock%}</body>
+  <body>
+    <header>
+      <h1>WebSCard</h1>
+      <p>A smartcard WSGI proxy</p>
+    </header>
+    <!-- stuff about freshness of current session -->
+    {% if request.new_session %}
+    <div class=notification>You just got a new session, Welcome !</div>
+    {% endif %}
+    <div>Your current session has uid {{ request.session.uid }}. You
+      can browse its <a href="/log/{{ request.session.uid }}">logs</a></div>
+    {% for context in request.session.contexts %}
+      {{ context.uid }}
+    {% else %}
+      <p>This session has opened no contexts.</p>
+    {% endfor %}
+    {% block body %}<p>Nothing to declare</p>{%endblock%}
+    <aside>
+      <header> Suggestions </header>
+      <nav>
+        <ul>
+          {% for link, title in suggestions %}
+            <li><a href="{{ link }}">{{ title }}</a></li>
+          {% endfor %}
+	</ul>
+      </nav>
+    </aside>
+    <footer />
+  </body>
 </html>

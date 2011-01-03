@@ -1,0 +1,20 @@
+{%extends "layout.html" %}
+{%block title %}Context Logs{% endblock %}
+{%block body %}
+<div id="operations">
+  <span>Operations</span>
+<ul>
+  {% for op in context.operations %}
+  <li>{{ op.name }}, {{ op.duration }} => {{ op.result }}</li>
+  {% endfor %}
+</ul>
+</div>
+<div id="handles">
+  <span>Handles</span>
+  <ul>
+  {% for hdl in context.handles %}
+    <li>{{ hdl.value }} ({{ hdl.uid }})</li>
+  {% endfor %}
+  </ul>
+</div>
+{% endblock %}

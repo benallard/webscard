@@ -17,10 +17,8 @@ from webscard.models.session import Session
 @expose('/')
 def welcome(request):
     sessions = dbsession.query(Session).all()
-    ss = []
-    for s in sessions:
-        ss.append(s.asdict())
-    return render(request, {'msg':"Welcome to the universal SCard Web Proxy", 'sessions': ss})
+    return render(request, {'msg':"Welcome to the universal SCard Web Proxy",
+                            'sessions': sessions})
 
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')
@@ -90,9 +88,13 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
 
-@expose('/<int:card>/Reconnect', defaults={"dwShareMode":2, "dwPreferredProtocols":3, "dwInitialisation": 0})
-@expose('/<int:card>/Reconnect/<int:dwShareMode>', defaults={"dwPreferredProtocols":3, "dwInitialisation": 0})
-@expose('/<int:card>/Reconnect/<int:dwShareMode>/<int:dwPreferredProtocols>', defaults={"dwInitialisation": 0})
+@expose('/<int:card>/Reconnect', defaults={"dwShareMode":2,
+                                           "dwPreferredProtocols":3,
+                                           "dwInitialisation": 0})
+@expose('/<int:card>/Reconnect/<int:dwShareMode>',
+        defaults={"dwPreferredProtocols":3, "dwInitialisation": 0})
+@expose('/<int:card>/Reconnect/<int:dwShareMode>/<int:dwPreferredProtocols>',
+        defaults={"dwInitialisation": 0})
 @expose('/<int:card>/Reconnect/<int:dwShareMode>/<int:dwPreferredProtocols>/<int:dwInitialisation>')
 def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation):
     hCard = Handle.query.get(card)
@@ -191,43 +193,30 @@ def releasecontext(request, context):
     logger.logoutput(opuid, hresult)
     return render(request, {"hresult":hresult})
 
-# our SOAP interface
 @expose('/soap/v<int:version>')
 def soapv(request, version):
+    """
+    Our SOAP interface
+    """
     method = getattr(soap, 'version%d' % version)
     return method(request)
 
-# name it differenty to avoid it being checked by the validator
 @expose('/<int:logcontext>')
-def log(request, logcontext):
-    return render(request, logger.getlogsfor(logcontext))
+def logforcontext(request, logcontext):
+    """
+    Gets the logs for a particular context
+    """
+    ctx = Context.query.get(logcontext)
+    return render(request, {"context": ctx})
 
-# next one is more detailed that the db one ... but already deprecated
 @expose('/log', defaults={'sid':None})
 @expose('/log/<int:sid>')
 def logforsession(request, sid):
+    """
+    Get the logs for a particular session
+    """
     if sid is None:
         sid = request.session.uid
     sess = Session.query.get(sid)
-    if sess is not None:
-        logs = sess.asdict()
-        for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
-            logs[ctx.uid] = logger.getlogsfor(ctx.uid)
-    else:
-        logs = {0:"Wrong session id"}
-    return render(request, logs)
-
-@expose('/logdb', defaults={'sid':None})
-@expose('/logdb/<int:sid>')
-def logforsessionfromdatabase(request, sid):
-    if sid is None:
-        sid = request.session.uid
-    sess = Session.query.get(sid)
-    if sess is not None:
-        logs = sess.asdict()
-        for ctx in dbsession.query(Context).filter(Context.session_uid == sid):
-            logs[ctx.uid] = logger.getlogsfromdbfor(ctx)
-    else:
-        logs = {0:"Wrong session id"}
-    return render(request, logs)
+    return render(request, {"session": sess})
 
