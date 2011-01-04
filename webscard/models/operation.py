@@ -57,6 +57,25 @@ mapper(Transmit, transmit_table, inherits=Operation, polymorphic_identity='trans
     properties = {'apdu': relation(APDU)},
 )
 
+control_table = Table('controls', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('controlcode', Integer),
+    Column('inbuffer', String),
+    Column('outbuffer', String),
+)
+
+class Control(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.controlcode = params['dwControlCode']
+        self.inbuffer = stringify(params['inbuffer'])
+
+    def performed(self, hresult, **params):
+        Operation.performed(self, hresult, **params)
+        self.outbuffer = stringify(params['outbuffer'])
+mapper(Control, control_table, inherits=Operation, polymorphic_identity='control')
+
+
 class GetStatusChange(Operation):
     pass
 
@@ -71,6 +90,7 @@ class Connect(Operation):
 
 classdict = {
     'transmit': Transmit,
+    'control': Control,
 #    'getstatuschange': GetStatusChange,
 #    'status': Status,
 #    'listreaders': ListReaders,
