@@ -26,6 +26,9 @@ def expose(rule, **kw):
         return f
     return decorate
 
+def url_for(endpoint, _external=False, **values):
+    return local.url_adapter.build(endpoint, values, force_external=_external)
+
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
             hasattr(sys, "importers") # old py2exe
