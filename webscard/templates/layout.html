@@ -19,7 +19,7 @@
     <div class=notification>You just got a new session, Welcome !</div>
     {% endif %}
     <div>Your current session has uid {{ request.session.uid }}. You
-      can browse its <a href="/log/{{ request.session.uid }}">logs</a></div>
+      can browse its <a href="{{ url_for('logforsession') }}">logs</a></div>
     {% for context in request.session.contexts %}
       {{ context.uid }}
     {% else %}

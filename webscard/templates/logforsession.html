@@ -3,7 +3,7 @@
 {%block body %}
 <ul>
   {% for ctx in session.contexts %}
-  <li>{{ ctx.value }} <a href="/{{ ctx.uid }}">log</a> (Opened
+  <li>{{ ctx.value }} <a href="{{ url_for('logforcontext', logcontext=ctx.uid) }}">log</a> (Opened
   {{ ctx.operations[0].initiated }})</li>
   {% endfor %}
 </ul>
