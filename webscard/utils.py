@@ -52,6 +52,13 @@ def hexlikeiwant(b):
         b = '0' + b
     return b
 
+def stringify(bytesarr):
+    """
+    >>> stringify([0,3, 66])
+    '00 03 42'
+    """
+    return ' '.join(map(hexlikeiwant, bytesarr))
+
 def loadpath(path, name):
     """ taken from mercurial.extensions """
     name = name.replace('.','_')

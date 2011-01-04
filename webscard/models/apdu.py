@@ -1,14 +1,7 @@
 from sqlalchemy import Table, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import mapper
 
-from webscard.utils import dbsession, metadata, hexlikeiwant
-
-def stringify(bytesarr):
-    """
-    >>> stringify([0,3, 66])
-    '00 03 42'
-    """
-    return ' '.join(map(hexlikeiwant, bytesarr))
+from webscard.utils import dbsession, metadata, stringify
 
 apdu_table = Table('apdus', metadata,
     Column("uid", Integer, primary_key=True),
