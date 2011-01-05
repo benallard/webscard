@@ -33,7 +33,8 @@ class WebSCard(object):
         local.url_adapter = url_map.bind_to_environ(environ)
         response = self.getresponse(request)
         return ClosingIterator(response(environ, start_response),
-                               [dbsession.remove, local_manager.cleanup])
+                               [dbsession.flush, dbsession.remove, 
+                                local_manager.cleanup])
 
     def getresponse(self, request):
         try:
