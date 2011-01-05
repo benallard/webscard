@@ -26,6 +26,9 @@ def expose(rule, **kw):
         return f
     return decorate
 
+def url_for(endpoint, _external=False, **values):
+    return local.url_adapter.build(endpoint, values, force_external=_external)
+
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
             hasattr(sys, "importers") # old py2exe
@@ -51,6 +54,13 @@ def hexlikeiwant(b):
     if len(b) == 1:
         b = '0' + b
     return b
+
+def stringify(bytesarr):
+    """
+    >>> stringify([0,3, 66])
+    '00 03 42'
+    """
+    return ' '.join(map(hexlikeiwant, bytesarr))
 
 def loadpath(path, name):
     """ taken from mercurial.extensions """

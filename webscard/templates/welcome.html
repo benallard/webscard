@@ -17,7 +17,7 @@
     {% else %}
       <p>This session did not opened any contexts</p>
     {% endif %}
-    <a href="/{{ session.uid }}">Session logs</a>
+    <a href="{{ url_for('logforsession', sid=session.uid) }}">Session logs</a>
   </div>
   {% endfor %}
   </ul>

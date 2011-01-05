@@ -11,10 +11,12 @@ from werkzeug import Response
 
 from smartcard.scard import SCardGetErrorMessage
 
+from webscard.utils import url_for
+
 #: Jinja2 Environment for our template handling
 jinja_environment = Environment(loader=FileSystemLoader(
     path.join(path.dirname(__file__), 'templates')))
-
+jinja_environment.globals['url_for'] = url_for
 
 def isabrowser(request):
     try:
@@ -50,9 +52,11 @@ class JinjaRenderer(object):
 
     def getsuggestions(self):
         for context in self.request.session.contexts:
-            yield ('/%d/ReleaseContext' % context.uid, "Close an unused context")
+            yield (url_for('releasecontext', context=context.uid), "Close an unused context")
+            for handles in context.handles:
+                yield(url_for('disconnect', card=handle.uid), "Disconnect an old handle")
         if self.request.endpoint == 'welcome':
-            yield ('/EstablishContext', "Establish a new context")
+            yield (url_for('establishcontext'), "Establish a new context")
 
     def __call__(self, context):
         context.update(self.ctxext)
