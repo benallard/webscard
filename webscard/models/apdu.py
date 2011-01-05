@@ -98,6 +98,6 @@ class APDU(object):
         else:
             if self.command[4] == 0:
                 return self.command[length-1] * 256 + self.command[length], 2
-            return self.__buffer[length], 1
+            return self.command[length], 1
 
 mapper(APDU, apdu_table)
