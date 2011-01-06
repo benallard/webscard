@@ -53,7 +53,7 @@ class JinjaRenderer(object):
     def getsuggestions(self):
         for context in self.request.session.contexts:
             yield (url_for('releasecontext', context=context.uid), "Close an unused context")
-            for handles in context.handles:
+            for handle in context.handles:
                 yield(url_for('disconnect', card=handle.uid), "Disconnect an old handle")
         if self.request.endpoint == 'welcome':
             yield (url_for('establishcontext'), "Establish a new context")

@@ -17,7 +17,13 @@ class Reader(object):
     def __init__(self, name):
         self.name = name
         dbsession.add(self)
-        dbsssion.flush()
+        dbsession.flush()
+
+    @classmethod
+    def get(cls, szReader):
+        potential = cls.query.filter_by(name=szReader).first()
+        return potential or cls(szReader)
+            
 
 mapper(Reader, reader_table,properties={
     'handles': relation(Handle, backref='reader')

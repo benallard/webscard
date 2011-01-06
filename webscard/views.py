@@ -69,21 +69,21 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
     return render(request, {"hresult":hresult, "rgReaderStates":states})
 
 @expose('/<int:context>/Connect/<szReader>',
-        defaults={'dwSharedMode': 2, 'dwPreferredProtocol': 3})
+        defaults={'dwSharedMode': 2, 'dwPreferredProtocols': 3})
 @expose('/<int:handle>/Connect/dwSharedMode/<szReader>',
-        defaults={'dwPreferredProtocol': 3})
-@expose('/<int:context>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocol>')
-def connect(request, context, szReader, dwSharedMode, dwPreferredProtocol):
+        defaults={'dwPreferredProtocols': 3})
+@expose('/<int:context>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocols>')
+def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
     hContext = Context.query.get(context)
     impl = request.implementation
     szReader = str(url_unquote(szReader))
     opuid = logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
-                    dwPreferredProtocol=dwPreferredProtocol)
+                    dwPreferredProtocols=dwPreferredProtocols)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
-        hContext.val, szReader, dwSharedMode, dwPreferredProtocol)
+        hContext.val, szReader, dwSharedMode, dwPreferredProtocols)
     after = datetime.now()
     hCard = Handle(hCard, hContext)
-    logger.logoutput(opuid, hresult, hCard=hCard.uid,
+    logger.logoutput(opuid, hresult, hCard=hCard,
                      dwActiveProtocol=dwActiveProtocol, time=after)
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
