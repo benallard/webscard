@@ -84,4 +84,4 @@ def make_app(config_path):
         pass
     
 if __name__ == "__main__":
-    make_app('z:\\WSCenv\\webscard\\webscard.cfg')
+    make_app(os.path.join(get_main_dir(), 'webscard.cfg'))

@@ -11,11 +11,10 @@ from werkzeug import Response
 
 from smartcard.scard import SCardGetErrorMessage
 
-from webscard.utils import url_for
+from webscard.utils import url_for, get_template_dir
 
 #: Jinja2 Environment for our template handling
-jinja_environment = Environment(loader=FileSystemLoader(
-    path.join(path.dirname(__file__), 'templates')))
+jinja_environment = Environment(loader=FileSystemLoader(get_template_dir()))
 jinja_environment.globals['url_for'] = url_for
 
 def isabrowser(request):

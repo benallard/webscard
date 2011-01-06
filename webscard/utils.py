@@ -30,14 +30,19 @@ def url_for(endpoint, _external=False, **values):
     return local.url_adapter.build(endpoint, values, force_external=_external)
 
 def main_is_frozen():
-    return (hasattr(sys, "frozen") or # new py2exe
-            hasattr(sys, "importers") # old py2exe
+    return (hasattr(sys, "frozen") # new py2exe
+            or hasattr(sys, "importers") # old py2exe
             or imp.is_frozen("__main__")) # tools/freeze
 
 def get_main_dir():
     if main_is_frozen():
         return os.path.dirname(sys.executable)
     return os.path.dirname(sys.argv[0])
+
+def get_template_dir():
+    if main_is_frozen():
+        return os.path.join(get_main_dir(), 'templates')
+    return os.path.join(os.path.dirname(__file__), 'templates')
 
 def unsigned_long(s):
     return int(s) % (2**32-1)
