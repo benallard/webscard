@@ -5,7 +5,6 @@ from webscard.utils import dbsession, metadata, stringify
 
 apdu_table = Table('apdus', metadata,
     Column("uid", Integer, primary_key=True),
-    Column("operation_uid", Integer, ForeignKey('operations.uid')),
     Column("type", Integer),
     Column("cla", Integer),
     Column("ins", Integer),
@@ -22,8 +21,7 @@ apdu_table = Table('apdus', metadata,
 class APDU(object):
     query = dbsession.query_property()
 
-    def __init__(self, operation, bytesarr):
-        self.operation_uid = operation.uid
+    def __init__(self, bytesarr):
         self.command = bytesarr
         dbsession.add(self)
         dbsession.flush()

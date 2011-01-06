@@ -47,14 +47,14 @@ transmit_table = Table('transmits', metadata,
 class Transmit(Operation):
     def __init__(self, name, context, **params):
         Operation.__init__(self, name, context, **params)
-        self.apdu = APDU(self, params['apdu'])
+        self.apdu = APDU(params['apdu'])
         self.protocol = params['dwProtocol']
 
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
         self.apdu.received(params['response'])
 mapper(Transmit, transmit_table, inherits=Operation, polymorphic_identity='transmit',
-    properties = {'apdu': relation(APDU)},
+    properties = {'apdu': relation(APDU, backref="operation")},
 )
 
 control_table = Table('controls', metadata,
