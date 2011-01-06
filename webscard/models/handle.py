@@ -7,6 +7,7 @@ handle_table = Table('handles', metadata,
     Column('uid', Integer, primary_key=True),
     Column('context_uid', Integer, ForeignKey('contexts.uid')),
     Column('value', Integer, nullable=False),
+    Column('reader_uid', integer, ForeignKey('readers.uid'))
 )
 
 class Handle(object):
