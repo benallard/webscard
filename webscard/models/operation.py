@@ -94,6 +94,7 @@ class Connect(Operation):
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
         self.hCard = params['hCard']
+        self.hCard.reader = self.readers
         self.activeprotocol = params['dwActiveProtocol']
 mapper(Connect, connect_table, inherits=Operation, polymorphic_identity='connect',
        properties={'reader':relation(Reader)}
