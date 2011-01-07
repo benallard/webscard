@@ -6,6 +6,7 @@ from webscard.utils import dbsession, metadata
 
 from webscard.models.handle import Context
 from webscard.models.apdu import APDU
+from webscard.models.reader import Reader
 
 operation_table = Table('operations', metadata,
     Column('uid', Integer, primary_key=True),
@@ -47,14 +48,14 @@ transmit_table = Table('transmits', metadata,
 class Transmit(Operation):
     def __init__(self, name, context, **params):
         Operation.__init__(self, name, context, **params)
-        self.apdu = APDU(self, params['apdu'])
+        self.apdu = APDU(params['apdu'])
         self.protocol = params['dwProtocol']
 
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
         self.apdu.received(params['response'])
 mapper(Transmit, transmit_table, inherits=Operation, polymorphic_identity='transmit',
-    properties = {'apdu': relation(APDU)},
+    properties = {'apdu': relation(APDU, backref="operation")},
 )
 
 control_table = Table('controls', metadata,
@@ -75,6 +76,29 @@ class Control(Operation):
         self.outbuffer = stringify(params['outbuffer'])
 mapper(Control, control_table, inherits=Operation, polymorphic_identity='control')
 
+connect_table = Table('connects', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('reader_uid', Integer, ForeignKey('readers.uid')),
+    Column('sharedmode', Integer),
+    Column('preferredprotocols', Integer),
+    Column('handle_uid', Integer, ForeignKey('handles.uid')),
+    Column('activeprotcol', Integer),
+)
+class Connect(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.reader = Reader.get(params['szReader'])
+        self.sharedmode = params['dwSharedMode']
+        self.preferredprotocols = params['dwPreferredProtocols']
+
+    def performed(self, hresult, **params):
+        Operation.performed(self, hresult, **params)
+        self.hCard = params['hCard']
+        self.hCard.reader = self.readers
+        self.activeprotocol = params['dwActiveProtocol']
+mapper(Connect, connect_table, inherits=Operation, polymorphic_identity='connect',
+       properties={'reader':relation(Reader)}
+)
 
 class GetStatusChange(Operation):
     pass
@@ -85,12 +109,10 @@ class Status(Operation):
 class ListReaders(Operation):
     pass
 
-class Connect(Operation):
-    pass
-
 classdict = {
     'transmit': Transmit,
     'control': Control,
+    'connect': Connect,
 #    'getstatuschange': GetStatusChange,
 #    'status': Status,
 #    'listreaders': ListReaders,
