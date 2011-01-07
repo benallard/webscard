@@ -8,7 +8,7 @@
   <p>This operation gave the following output</p>
   {% block output %}{% endblock %}
 {% else %}
-  There has been an error during the execution of this operation:
-  {{ hresult }}
+  <p>There has been an error during the execution of this operation:
+  <b>{{ SCardError(hresult) }}</b></p>
 {% endif %}
 {% endblock %}

@@ -94,10 +94,36 @@ class Connect(Operation):
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
         self.hCard = params['hCard']
-        self.hCard.reader = self.readers
+        self.hCard.reader = self.reader
         self.activeprotocol = params['dwActiveProtocol']
 mapper(Connect, connect_table, inherits=Operation, polymorphic_identity='connect',
        properties={'reader':relation(Reader)}
+)
+
+establishcontext_table = Table('establishcontexts', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('scope', Integer),
+    Column('context_uid', Integer, ForeignKey('contexts.uid'))
+)
+class EstablishContext(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.scope = params['dwScope']
+        self.context = context
+mapper(EstablishContext, establishcontext_table, inherits=Operation, polymorphic_identity='establishcontext',
+       properties={'context':relation(Context, backref='opened_by')}
+)
+
+releasecontext_table = Table('releasecontexts', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('context_uid', Integer, ForeignKey('contexts.uid'))
+)
+class ReleaseContext(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.context = context
+mapper(ReleaseContext, releasecontext_table, inherits=Operation, polymorphic_identity='releasecontext',
+       properties={'context':relation(Context, backref='closed_by')}
 )
 
 class GetStatusChange(Operation):
@@ -113,9 +139,8 @@ classdict = {
     'transmit': Transmit,
     'control': Control,
     'connect': Connect,
-#    'getstatuschange': GetStatusChange,
-#    'status': Status,
-#    'listreaders': ListReaders,
+    'establishcontext': EstablishContext,
+    'releasecontext': ReleaseContext,
 }
 
 def getclassfor(name):
