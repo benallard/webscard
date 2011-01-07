@@ -17,12 +17,9 @@ class WebSCard(object):
     def __init__(self, config):
         local.application = self
         self.config = config
-        db_uri = self.config.getstring('db.uri', "sqlite:///:memory:")
+        db_uri = self.config.getstring('db.uri', "sqlite:///webscard.db")
         self.database_engine = create_engine(db_uri, convert_unicode=True)
         dbsession.configure(bind=self.database_engine)
-        if db_uri == "sqlite:///:memory:":
-            print "init db"
-            self.init_database()
         self.secret_key = config.getcookiesecret()
         chooser.initialize()
         bonjour.register(config.getport(), config.getimplementations())
