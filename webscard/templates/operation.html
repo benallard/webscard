@@ -1,14 +1,20 @@
 {% extends "layout.html" %}
 {% block title %}Operation{% endblock %}
 {% block body %}
-<p>You just performed a PC/SC operation</p>
-{% block code %}/!\ Code block no defined /!\{% endblock %}
-{% if hresult == 0 %}
-  It went successfully and ...
-  <p>This operation gave the following output</p>
-  {% block output %}{% endblock %}
-{% else %}
-  <p>There has been an error during the execution of this operation:
-  <b>{{ SCardError(hresult) }}</b></p>
-{% endif %}
+<div id="content">
+  <p>You just performed a PC/SC operation</p>
+  {% block code %}/!\ Code block no defined /!\{% endblock %}
+  {% if hresult == 0 %}
+    It went successfully and ...
+    <p>This operation gave the following output</p>
+    {% block output %}{% endblock %}
+  {% else %}
+    There has been an error during the execution of this operation:
+    {{ SCardError(hresult) }}
+  {% endif %}
+</div>
+<div id="suggestions">
+  <h2> Suggestions </h2>
+  <ul>{% block suggestions %}No suggestions{% endblock %}</ul>
+</div>
 {% endblock %}

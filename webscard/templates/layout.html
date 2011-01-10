@@ -1,41 +1,44 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="keywords" content="" /
-    <meta name="description" content="" />
     <title>{% block title %}Untitled{% endblock %} - WebSCard</title>
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="screen" />
-    <link href="css/ajaxtabs.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
-    <header>
+    <div id="header">
       <h1>WebSCard</h1>
       <p>A smartcard WSGI proxy</p>
-    </header>
+    </div>
     <!-- stuff about freshness of current session -->
     {% if request.new_session %}
-    <div class=notification>You just got a new session, Welcome !</div>
+    <div class="notification">You just got a new session, Welcome !</div>
     {% endif %}
-    <div>Your current session has uid {{ request.session.uid }}. You
-      can browse its <a href="{{ url_for('logforsession') }}">logs</a></div>
-    {% for context in request.session.contexts %}
-      {{ context.uid }}
-    {% else %}
-      <p>This session has opened no contexts.</p>
-    {% endfor %}
-    {% block body %}<p>Nothing to declare</p>{%endblock%}
-    <aside>
-      <header> Suggestions </header>
-      <nav>
-        <ul>
-          {% for link, title in suggestions %}
-            <li><a href="{{ link }}">{{ title }}</a></li>
-          {% endfor %}
-	</ul>
-      </nav>
-    </aside>
-    <footer />
+    <div>
+      <h2>Current session status</h2>
+      <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
+      <h3>Opened contexts and Handles</h3>
+      <ul>
+        {% for context in request.session.contexts %}
+        <li>{{ context.value }}
+	      {%- if not context.closed_by -%}
+	      <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
+	      {%- else -%}
+	      (closed)
+	      {%- endif -%}
+	      <ul>
+	      {% for handle in context.handles %}
+	        <li>{{ handle.value }} (on {{ handle.reader.name }}) - {{ handle.opened_by|e }} - {{ handle.closed_by|e }}
+	        {%- if not handle.closed_by -%}
+	        <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
+	        {%- else -%}
+	        (closed)
+	        {%- endif -%}
+	        </li>
+	      {% endfor %}
+	      </ul>
+	    </li>
+        {% endfor %}
+      </ul>
+    <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
+    <div id="footer" />
   </body>
 </html>

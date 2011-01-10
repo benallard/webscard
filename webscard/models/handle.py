@@ -2,7 +2,6 @@ from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import mapper, relation
 from webscard.utils import dbsession, metadata
 
-
 handle_table = Table('handles', metadata,
     Column('uid', Integer, primary_key=True),
     Column('context_uid', Integer, ForeignKey('contexts.uid')),
@@ -48,6 +47,6 @@ class Context(object):
         return long(self.value)
 
 mapper(Context, context_table, properties={
-    'handles': relation(Handle, backref='context')
+    'handles': relation(Handle, backref='context'),
 })
 

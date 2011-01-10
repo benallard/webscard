@@ -7,3 +7,6 @@ SCardDisconnect()
   </pre>
 </div>
 {% endblock %}
+{% block suggestions %}
+<li><a href="{{ url_for('listreaders', context=request.card.context.uid) }}">List the readers present</a></li>
+{% endblock %}
