@@ -49,16 +49,7 @@ class JinjaRenderer(object):
         self.request = request
         self.ctxext = {} #context extension
         self.ctxext['request'] = request
-
-    def getsuggestions(self):
-        for context in self.request.session.contexts:
-            yield (url_for('releasecontext', context=context.uid), "Close an unused context")
-            for handle in context.handles:
-                yield(url_for('disconnect', card=handle.uid), "Disconnect an old handle")
-        if self.request.endpoint == 'welcome':
-            yield (url_for('establishcontext'), "Establish a new context")
-
+       
     def __call__(self, context):
         context.update(self.ctxext)
-        context['suggestions'] = self.getsuggestions()
         return jinja_environment.get_template(self.template_name).render(context)

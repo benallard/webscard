@@ -15,3 +15,8 @@ The readers are
 {% endfor %}
 </ul>
 {% endblock output %}
+{% block suggestions %}
+{% for reader in mszReaders %}
+<li><a href="{{ url_for('connect', context=request.context, szReader=reader) }}">Connect to {{ reader }}</a></li>
+{% endfor %}
+{% endblock %}

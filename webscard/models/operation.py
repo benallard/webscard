@@ -1,10 +1,10 @@
 from sqlalchemy import Table, Column, Integer, Float, DateTime, String
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import mapper, relation
+from sqlalchemy.orm import mapper, relation, backref
 
 from webscard.utils import dbsession, metadata
 
-from webscard.models.handle import Context
+from webscard.models.handle import Context, Handle
 from webscard.models.apdu import APDU
 from webscard.models.reader import Reader
 
@@ -94,10 +94,49 @@ class Connect(Operation):
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
         self.hCard = params['hCard']
-        self.hCard.reader = self.readers
+        self.hCard.reader = self.reader
         self.activeprotocol = params['dwActiveProtocol']
 mapper(Connect, connect_table, inherits=Operation, polymorphic_identity='connect',
-       properties={'reader':relation(Reader)}
+       properties={'reader':relation(Reader),
+                   'hCard':relation(Handle, backref=backref('opened_by', uselist=False))}
+)
+
+disconnect_table = Table('disconnects', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('handle_uid', Integer, ForeignKey('handles.uid')),
+    Column('disposition', Integer),
+)
+class Disconnect(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.hCard = params['hCard']
+        self.disposition = params['dwDisposition']
+mapper(Disconnect, disconnect_table, inherits=Operation, polymorphic_identity='disconnect',
+       properties={'hCard':relation(Handle, backref='closed_by')}
+)
+
+establishcontext_table = Table('establishcontexts', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('scope', Integer),
+)
+class EstablishContext(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.scope = params['dwScope']
+        self.context.opened_by = self
+mapper(EstablishContext, establishcontext_table, inherits=Operation, polymorphic_identity='establishcontext',
+       properties={'context':relation(Context, backref=backref('opened_by', uselist=False))}
+)
+
+releasecontext_table = Table('releasecontext', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+)
+class ReleaseContext(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.context.closed_by.append(self)
+mapper(ReleaseContext, releasecontext_table, inherits=Operation, polymorphic_identity='releasecontext',
+       properties={'context':relation(Context, backref='closed_by')}
 )
 
 class GetStatusChange(Operation):
@@ -113,6 +152,9 @@ classdict = {
     'transmit': Transmit,
     'control': Control,
     'connect': Connect,
+    'disconnect': Disconnect,
+    'establishcontext': EstablishContext,
+    'releasecontext': ReleaseContext,
 #    'getstatuschange': GetStatusChange,
 #    'status': Status,
 #    'listreaders': ListReaders,

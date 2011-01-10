@@ -1,7 +1,6 @@
 {%extends "layout.html" %}
 {%block title %}Welcome{% endblock %}
 {%block body %}
-
 <p> This is WebSCard </p>
 <p>Welcome to the universal SCard Web Proxy</p>
 <p> It allow you to communicate to a smartcard via network.</p>
@@ -21,5 +20,9 @@
   </div>
   {% endfor %}
   </ul>
+</div>
+<div>
+  <p>A PC/SC communication should begin with a context. Why not <a
+  href="{{ url_for('establishcontext')}}">establishing a new one</a> ?</p>
 </div>
 {% endblock %}

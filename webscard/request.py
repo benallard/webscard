@@ -53,8 +53,10 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     def validatesession(self, **values):
         if 'context' in values:
+            self.context = values['context']
             res = self.session.validatecontext(values['context'])
         elif 'card' in values:
+            self.card = values['card']
             res = self.session.validatehandle(values['card'])
         else:
             res = None

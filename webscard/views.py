@@ -169,7 +169,7 @@ def disconnect(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, dwDisposition=dwDisposition)
+    opuid = logger.loginput(hContext, dwDisposition=dwDisposition, hCard=hCard)
     hresult = impl.SCardDisconnect(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
     return render( request, {"hresult": hresult})
