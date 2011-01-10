@@ -7,3 +7,9 @@ SCardConnect()
   </pre>
 </div>
 {% endblock %}
+{% block output %}
+The new handle is #{{ hCard }}
+{% endblock %}
+{% block suggestions %}
+<li><a href="{{ url_for('begintransaction', card=hCard) }}">Begin a Transaction</a></li>
+{% endblock %}

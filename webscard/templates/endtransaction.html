@@ -1,0 +1,12 @@
+{%extends "operation.html" %}
+{%block title %}EndTransaction{% endblock %}
+{%block code %}
+<div class="code">
+  <pre>
+SCardEndTransaction()
+  </pre>
+</div>
+{% endblock %}
+{% block suggestions %}
+<li><a href="{{ url_for('begintransaction', card=request.card) }}">Begin a new transaction</a></li>
+{% endblock %}
