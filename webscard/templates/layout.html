@@ -8,8 +8,15 @@
       <h1>WebSCard</h1>
       <p>A smartcard WSGI proxy</p>
     </div>
-    <!-- stuff about freshness of current session -->
+    <div id="navigation">
+      <ul>
+        {% for url, caption in [(url_for('welcome'), "Home"),(url_for('establishcontext'), "New context")] %}
+        <li><a href="{{ url }}">{{ caption }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
     {% if request.newsession %}
+    <!-- stuff about freshness of current session -->
     <div class="notification">You just got a new session, Welcome !</div>
     {% endif %}
     <div id="status">
@@ -40,9 +47,13 @@
         {% endfor %}
       </ul>
       {% endif %}
+      <h3>Implementation</h3>
+      {{ request.implementation|e }}
+    </div>
     <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
     <div id="footer">
       <!-- versions, fozen, blahlah -->
+      This is <ul><li>WebSCard <span class="version">r0897b+</span> (not frozen)</li><li>Werkzeug <span class="version">0.7.8f</span></li><li>SQLAlchemy <span class="version">0.6.7g</span></li></ul> (This information is wrong)</span>
     </div>
   </body>
 </html>
