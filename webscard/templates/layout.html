@@ -9,16 +9,17 @@
       <p>A smartcard WSGI proxy</p>
     </div>
     <!-- stuff about freshness of current session -->
-    {% if request.new_session %}
+    {% if request.newsession %}
     <div class="notification">You just got a new session, Welcome !</div>
     {% endif %}
-    <div>
+    <div id="status">
       <h2>Current session status</h2>
       <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
+      {% if request.session.contexts %}
       <h3>Opened contexts and Handles</h3>
       <ul>
         {% for context in request.session.contexts %}
-        <li>{{ context.value }}
+        <li>{{ context.value|hex }}
 	      {%- if not context.closed_by -%}
 	      <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
 	      {%- else -%}
@@ -26,7 +27,7 @@
 	      {%- endif -%}
 	      <ul>
 	      {% for handle in context.handles %}
-	        <li>{{ handle.value }} (on {{ handle.reader.name }}) - {{ handle.opened_by|e }} - {{ handle.closed_by|e }}
+	        <li>{{ handle.value|hex }} (on {{ handle.reader.name }})
 	        {%- if not handle.closed_by -%}
 	        <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
 	        {%- else -%}
@@ -38,7 +39,10 @@
 	    </li>
         {% endfor %}
       </ul>
+      {% endif %}
     <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
-    <div id="footer" />
+    <div id="footer">
+      <!-- versions, fozen, blahlah -->
+    </div>
   </body>
 </html>

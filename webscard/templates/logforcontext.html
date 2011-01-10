@@ -13,7 +13,7 @@
   <span>Handles</span>
   <ul>
   {% for hdl in context.handles %}
-    <li>{{ hdl.value }} ({{ hdl.uid }})</li>
+    <li>{{ hdl.value|hex }}</li>
   {% endfor %}
   </ul>
 </div>
