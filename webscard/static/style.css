@@ -1,0 +1,31 @@
+body {
+  background: red
+}
+
+#header {
+  background: cyan;
+}
+
+#container {
+  width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+#status {
+  position:absolute;
+  background: green;
+  right: -30px;
+  top: 150px;
+  width: 200px;
+}
+
+#body {
+  padding: 20px 200px 20px 20px;
+  background: orange;
+  bottom: 0;
+}
+
+#suggestions {
+  background:yellow;
+}

@@ -1,44 +1,48 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+  	<link rel="stylesheet" type="text/css" href="{{ url_for('static', file='style.css') }}">
     <title>{% block title %}Untitled{% endblock %} - WebSCard</title>
   </head>
   <body>
-    <div id="header">
-      <h1>WebSCard</h1>
-      <p>A smartcard WSGI proxy</p>
-    </div>
-    <!-- stuff about freshness of current session -->
-    {% if request.new_session %}
-    <div class="notification">You just got a new session, Welcome !</div>
-    {% endif %}
-    <div>
-      <h2>Current session status</h2>
-      <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
-      <h3>Opened contexts and Handles</h3>
-      <ul>
-        {% for context in request.session.contexts %}
-        <li>{{ context.value }}
-	      {%- if not context.closed_by -%}
-	      <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
-	      {%- else -%}
-	      (closed)
-	      {%- endif -%}
-	      <ul>
-	      {% for handle in context.handles %}
-	        <li>{{ handle.value }} (on {{ handle.reader.name }}) - {{ handle.opened_by|e }} - {{ handle.closed_by|e }}
-	        {%- if not handle.closed_by -%}
-	        <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
+  	<div id="container">
+      <div id="header">
+        <h1>WebSCard</h1>
+        <p>A smartcard WSGI proxy</p>
+      </div>
+      <!-- stuff about freshness of current session -->
+      {% if request.new_session %}
+      <div class="notification">You just got a new session, Welcome !</div>
+      {% endif %}
+      <div id="status">
+        <h2>Current session status</h2>
+        <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
+        <h3>Opened contexts and Handles</h3>
+        <ul>
+          {% for context in request.session.contexts %}
+          <li>{{ context.value }}
+	        {%- if not context.closed_by -%}
+	        <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
 	        {%- else -%}
 	        (closed)
 	        {%- endif -%}
-	        </li>
-	      {% endfor %}
-	      </ul>
-	    </li>
-        {% endfor %}
-      </ul>
-    <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
-    <div id="footer" />
+	        <ul>
+	        {% for handle in context.handles %}
+	          <li>{{ handle.value }} (on {{ handle.reader.name }})
+	          {%- if not handle.closed_by -%}
+	          <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
+	          {%- else -%}
+	          (closed)
+	          {%- endif -%}
+	          </li>
+	        {% endfor %}
+	        </ul>
+	      </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
+      <div id="footer" />
+    </div>
   </body>
 </html>
