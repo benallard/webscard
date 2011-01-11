@@ -10,8 +10,8 @@
         <h1><a href="{{ url_for('welcome') }}">WebSCard</a></h1>
         <p>A smartcard WSGI proxy</p>
       </div>
-      <div id="navigation">
-        <ul>
+      <div id="nav-container">
+        <ul id="navigation">
           {% for url, caption in [(url_for('welcome'), "Home"),
                                   (url_for('establishcontext'), "New context"),
                                   ("http://bitbucket.org/benallard/webscard", "Project page"),
@@ -59,7 +59,15 @@
       </div>
       <div id="footer">
         <!-- versions, fozen, blahlah -->
-        This is <ul><li>WebSCard <span class="version">r0897b+</span> (not frozen)</li><li>Werkzeug <span class="version">0.7.8f</span></li><li>SQLAlchemy <span class="version">0.6.7g</span></li></ul> (This information is wrong)</span>
+        This is 
+        <ul id="technologies">
+          {% for name, url, version in [("WebSCard", "http://bitbucket.org/benallard/webscard", "r743289+"),
+                                        ("Werkzeug", "http://werkzeug.pocoo.org/", "0.6.2"),
+                                        ("SQLAlchemy", "http://www.sqlalchemy.org/", "0.6.5"),
+                                        ("Python", "http://www.python.org", "2.5.2")] %}
+          <li><a href="{{ url }}">{{ name }} <span class="version">{{ version }}</span></a></li>
+          {% endfor %}
+          (This information is wrong)
       </div>
     </div>
   </body>

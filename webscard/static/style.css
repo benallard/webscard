@@ -1,5 +1,6 @@
 body {
-  background: #ddd
+  background: #ddd;
+  font-family: sans-serif;
 }
 
 #container {
@@ -9,13 +10,35 @@ body {
 }
 
 #header {
-  background: cyan;
+  position: relative;
+  background: url('webscard-128.png') no-repeat 97% 50%;
+  height: 128px;
+  background-color: white;
+  border-width: 2px;
+  border-color: #aaa;
+  border-style: none solid solid none;
+  border-bottom-right-radius: 5em;
+  border-top-left-radius: 5em;
+}
+
+#header h1 {
+  position: relative;
+  left: 2em;
+}
+
+#header p {
+  position: absolute;
+  left: 0.5em;
+  bottom: 0;
+}
+
+#nav-container {
+  overflow: auto;
 }
 
 #navigation {
   margin: 0;
   padding: 0;
-  background: gray;
   float: left;
   width: 100%;
 }
@@ -28,30 +51,76 @@ body {
 
 #navigation a {
   float: left;
-  background: yellow;
-  width: 10em;
-  margin: 0.3em;
+  background: #efefef;
+  padding: 1em 1em 0 1em;
   text-align: center;
+  border-width: 2px;
+  border-color: #aaa;
+  border-style: solid solid none solid;
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
 }
 
 #body {
-  padding: 20px 200px 20px 20px;
-  background: orange;
-  bottom: 0;
-  position: relative;
-  clear: both;
-  height: auto;
+  background: white;
+  border: 2px solid #aaa;
+  margin-right: 20px;
+  padding: 5px
+}
+
+/* http://colinaarts.com/articles/float-containment/ */
+#body:after {
+  content    : ".";
+  display    : block;
+  height     : 0;
+  clear      : both;
+  visibility : hidden;
 }
 
 #status {
-  position: absolute;
-  background: green;
-  right: -30px;
-  top: 40px;
+  float: right;
+  background: white;
+  margin: 40px -40px 0 0;
   width: 200px;
+  border-style: solid solid none none;
+  border-width: 2px;
+  border-color: #aaa;
+  border-top-right-radius: 3em;
 }
 
-
 #suggestions {
-  background:yellow;
+  border: 1px solid #aaa;
+  border-bottom-left-radius: 2em;
+  border-top-right-radius: 2em;
+}
+
+#footer {
+  font-size: 12px;
+  margin: 10px 0 10px 0;
+  background: white;
+  border-style: solid none none solid;
+  border-width: 2px;
+  border-color: #aaa;
+  border-top-left-radius: 1em;
+  border-bottom-right-radius: 1em;
+}
+
+#technologies li + li::before {
+  content: ' / ';
+  padding: 0px 4px;
+}
+
+#footer ul {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
+
+#footer li {
+  display: inline;
+  padding: 1px;
+}
+
+.version {
+  font-family: monospace;
 }
