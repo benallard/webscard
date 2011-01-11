@@ -1,0 +1,21 @@
+{%extends "layout.html" %}
+{%block title %}Session List{% endblock %}
+{%block body %}
+<div>
+  There are currently {{ sessions|length }} sessions listed.
+  <ul>
+  {% for session in sessions %}
+  <div class="session">
+    <h2>{{ session.firstactivity }}</h2>
+    <p>Owner: {{ session.remote_addr }} ( {{ session.user_agent }} )</p>
+    {% if session.contexts %}
+      <p>There is activity on this session.</p>
+    {% else %}
+      <p>This session did not opened any contexts</p>
+    {% endif %}
+    <a href="{{ url_for('logforsession', sid=session.uid) }}">Session logs</a>
+  </div>
+  {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -16,9 +16,7 @@ from webscard.models.session import Session
 
 @expose('/')
 def welcome(request):
-    sessions = dbsession.query(Session).all()
-    return render(request, {'msg':"Welcome to the universal SCard Web Proxy",
-                            'sessions': sessions})
+    return render(request, {})
 
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')
@@ -220,3 +218,7 @@ def logforsession(request, sid):
     sess = Session.query.get(sid)
     return render(request, {"session": sess})
 
+@expose('/sessions')
+def sessionlist(request):
+    sessions = dbsession.query(Session).all()
+    return render(request, {'sessions': sessions})
