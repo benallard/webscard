@@ -18,12 +18,9 @@ class WebSCard(object):
     def __init__(self, config):
         local.application = self
         self.config = config
-        db_uri = self.config.getstring('db.uri', "sqlite:///:memory:")
+        db_uri = self.config.getstring('db.uri', "sqlite:///webscard.db")
         self.database_engine = create_engine(db_uri, convert_unicode=True)
         dbsession.configure(bind=self.database_engine)
-        if db_uri == "sqlite:///:memory:":
-            print "init db"
-            self.init_database()
         self.secret_key = config.getcookiesecret()
         chooser.initialize()
         bonjour.register(config.getport(), config.getimplementations())
@@ -37,7 +34,8 @@ class WebSCard(object):
         local.url_adapter = url_map.bind_to_environ(environ)
         response = self.getresponse(request)
         return ClosingIterator(response(environ, start_response),
-                               [dbsession.remove, local_manager.cleanup])
+                               [dbsession.flush, dbsession.remove, 
+                                local_manager.cleanup])
 
     def __call__(self, environ, start_response):
         return self.dispatch(environ, start_response)

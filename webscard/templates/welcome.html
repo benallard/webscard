@@ -4,23 +4,6 @@
 <p> This is WebSCard </p>
 <p>Welcome to the universal SCard Web Proxy</p>
 <p> It allow you to communicate to a smartcard via network.</p>
-<div id="sessions">
-  There are currently {{ sessions|length }} sessions listed.
-  <ul>
-  {% for session in sessions %}
-  <div class="session">
-    <h2> Session {{ session.uid }}</h2>
-    Owner: {{ session.remote_addr }} ( {{ session.user_agent }} )
-    {% if session.contexts %}
-      <p>There is activity on this session.</p>
-    {% else %}
-      <p>This session did not opened any contexts</p>
-    {% endif %}
-    <a href="{{ url_for('logforsession', sid=session.uid) }}">Session logs</a>
-  </div>
-  {% endfor %}
-  </ul>
-</div>
 <div>
   <p>A PC/SC communication should begin with a context. Why not <a
   href="{{ url_for('establishcontext')}}">establishing a new one</a> ?</p>

@@ -11,12 +11,17 @@ from werkzeug import Response
 
 from smartcard.scard import SCardGetErrorMessage
 
-from webscard.utils import url_for
+from webscard.utils import url_for, get_template_dir
 
 #: Jinja2 Environment for our template handling
-jinja_environment = Environment(loader=FileSystemLoader(
-    path.join(path.dirname(__file__), 'templates')))
+jinja_environment = Environment(loader=FileSystemLoader(get_template_dir()))
 jinja_environment.globals['url_for'] = url_for
+jinja_environment.globals['SCardError'] = SCardGetErrorMessage
+
+def hexadecimal(value, format='0x%08X'):
+    return format % value
+
+jinja_environment.filters['hex'] = hexadecimal
 
 def isabrowser(request):
     try:

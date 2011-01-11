@@ -2,29 +2,55 @@ body {
   background: #ddd
 }
 
-#header {
-  background: cyan;
-}
-
 #container {
   width: 900px;
   margin: 0 auto;
   position: relative;
 }
 
-#status {
-  position:absolute;
-  background: green;
-  right: -30px;
-  top: 150px;
-  width: 200px;
+#header {
+  background: cyan;
+}
+
+#navigation {
+  margin: 0;
+  padding: 0;
+  background: gray;
+  float: left;
+  width: 100%;
+}
+
+#navigation li {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+#navigation a {
+  float: left;
+  background: yellow;
+  width: 10em;
+  margin: 0.3em;
+  text-align: center;
 }
 
 #body {
   padding: 20px 200px 20px 20px;
   background: orange;
   bottom: 0;
+  position: relative;
+  clear: both;
+  height: auto;
 }
+
+#status {
+  position: absolute;
+  background: green;
+  right: -30px;
+  top: 40px;
+  width: 200px;
+}
+
 
 #suggestions {
   background:yellow;

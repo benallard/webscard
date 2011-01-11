@@ -8,7 +8,7 @@ SCardEstablishContext()
 </div>
 {% endblock %}
 {% block output %}
-The established context has #{{ hcontext }}
+<p>The established context has #{{ hcontext }}</p>
 {% endblock %}
 {% block suggestions %}
 <li><a href="{{ url_for('listreaders', context=hcontext) }}">List the readers present</a></li>

@@ -1,48 +1,66 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-  	<link rel="stylesheet" type="text/css" href="{{ url_for('static', file='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', file='style.css') }}">
     <title>{% block title %}Untitled{% endblock %} - WebSCard</title>
   </head>
   <body>
-  	<div id="container">
+    <div id="container">
       <div id="header">
-        <h1>WebSCard</h1>
+        <h1><a href="{{ url_for('welcome') }}">WebSCard</a></h1>
         <p>A smartcard WSGI proxy</p>
       </div>
-      <!-- stuff about freshness of current session -->
-      {% if request.new_session %}
-      <div class="notification">You just got a new session, Welcome !</div>
-      {% endif %}
-      <div id="status">
-        <h2>Current session status</h2>
-        <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
-        <h3>Opened contexts and Handles</h3>
+      <div id="navigation">
         <ul>
-          {% for context in request.session.contexts %}
-          <li>{{ context.value }}
-	        {%- if not context.closed_by -%}
-	        <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
-	        {%- else -%}
-	        (closed)
-	        {%- endif -%}
-	        <ul>
-	        {% for handle in context.handles %}
-	          <li>{{ handle.value }} (on {{ handle.reader.name }})
-	          {%- if not handle.closed_by -%}
-	          <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
-	          {%- else -%}
-	          (closed)
-	          {%- endif -%}
-	          </li>
-	        {% endfor %}
-	        </ul>
-	      </li>
+          {% for url, caption in [(url_for('welcome'), "Home"),
+                                  (url_for('establishcontext'), "New context"),
+                                  ("http://bitbucket.org/benallard/webscard", "Project page"),
+                                  (url_for('sessionlist'), "Sessions")] %}
+          <li><a href="{{ url }}">{{ caption }}</a></li>
           {% endfor %}
         </ul>
       </div>
-      <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
-      <div id="footer" />
+      {% if request.new_session %}
+      <!-- stuff about freshness of current session -->
+      <div class="notification">You just got a new session, Welcome !</div>
+      {% endif %}
+      <div id="body">
+        <div id="status">
+          <h2>Current session status</h2>
+          <ul>
+            <li><a href="{{ url_for('logforsession') }}">logs</a></li>
+            <li><a href="#">drop session</a></li>
+          </ul>
+          {% if request.session.contexts %}
+          <h3>Opened contexts and Handles</h3>
+          <ul>
+            {% for context in request.session.contexts %}
+            <li><a href="{{ url_for('logforcontext', logcontext=context.uid) }}">{{ context.value|hex }}</a>
+              {%- if not context.closed_by -%}
+                <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
+              {%- endif -%}
+              <ul>
+                {% for handle in context.handles %}
+                <li><a title="{{ handle.reader.name }}">{{ handle.value|hex }}</a>
+                  {%- if not (handle.closed_by or context.closed_by) -%}
+                  <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
+                  {%- endif -%}
+                </li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          <h3>Implementation</h3>
+          {{ request.implementation|e }}
+        </div>
+        {% block body %}<p>Nothing to declare</p>{% endblock %}
+      </div>
+      <div id="footer">
+        <!-- versions, fozen, blahlah -->
+        This is <ul><li>WebSCard <span class="version">r0897b+</span> (not frozen)</li><li>Werkzeug <span class="version">0.7.8f</span></li><li>SQLAlchemy <span class="version">0.6.7g</span></li></ul> (This information is wrong)</span>
+      </div>
     </div>
   </body>
 </html>

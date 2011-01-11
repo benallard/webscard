@@ -82,7 +82,7 @@ connect_table = Table('connects', metadata,
     Column('sharedmode', Integer),
     Column('preferredprotocols', Integer),
     Column('handle_uid', Integer, ForeignKey('handles.uid')),
-    Column('activeprotcol', Integer),
+    Column('activeprotocol', Integer),
 )
 class Connect(Operation):
     def __init__(self, name, context, **params):
@@ -155,9 +155,6 @@ classdict = {
     'disconnect': Disconnect,
     'establishcontext': EstablishContext,
     'releasecontext': ReleaseContext,
-#    'getstatuschange': GetStatusChange,
-#    'status': Status,
-#    'listreaders': ListReaders,
 }
 
 def getclassfor(name):

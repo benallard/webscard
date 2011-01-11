@@ -10,11 +10,11 @@
     {% block output %}{% endblock %}
   {% else %}
     There has been an error during the execution of this operation:
-    {{ hresult }}
+    {{ SCardError(hresult) }}
   {% endif %}
 </div>
 <div id="suggestions">
   <h2> Suggestions </h2>
-  <ul>{% block suggestions %}Not defined{% endblock %}</ul>
+  <ul>{% block suggestions %}No suggestions{% endblock %}</ul>
 </div>
 {% endblock %}
