@@ -68,7 +68,7 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
 
 @expose('/<int:context>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocols': 3})
-@expose('/<int:handle>/Connect/dwSharedMode/<szReader>',
+@expose('/<int:handle>/Connect/<szReader>/<int:dwSharedMode>',
         defaults={'dwPreferredProtocols': 3})
 @expose('/<int:context>/Connect/<szReader>/<int:dwSharedMode>/<int:dwPreferredProtocols>')
 def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
