@@ -99,7 +99,7 @@ def instanciateimpl(impl, session):
         implinst = impl['acquire'](session)
     else:
         if impl['class']:
-            implinst = imp['impl'](impl['name'], application.config)
+            implinst = impl['impl'](impl['name'], application.config)
         else:
             implinst = impl['impl']
     return implinst

@@ -18,7 +18,7 @@ metadata = MetaData()
 dbsession = scoped_session(sessionmaker(autocommit=True), 
                            local_manager.get_ident)
 
-url_map = Map(redirect_defaults=False)
+url_map = Map([Rule('/static/<file>', endpoint='static', build_only=True)],redirect_defaults=False)
 def expose(rule, **kw):
     def decorate(f):
         kw['endpoint'] = f.__name__
@@ -43,6 +43,11 @@ def get_template_dir():
     if main_is_frozen():
         return os.path.join(get_main_dir(), 'templates')
     return os.path.join(os.path.dirname(__file__), 'templates')
+
+def get_static_dir():
+    if main_is_frozen():
+        return os.path.join(get_main_dir(), 'static')
+    return os.path.join(os.path.dirname(__file__), 'static')
 
 def unsigned_long(s):
     return int(s) % (2**32-1)

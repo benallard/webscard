@@ -1,56 +1,55 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+  	<link rel="stylesheet" type="text/css" href="{{ url_for('static', file='style.css') }}">
     <title>{% block title %}Untitled{% endblock %} - WebSCard</title>
   </head>
   <body>
-    <div id="header">
-      <h1>WebSCard</h1>
-      <p>A smartcard WSGI proxy</p>
-    </div>
-    <div id="navigation">
-      <ul>
-        {% for url, caption in [(url_for('welcome'), "Home"),(url_for('establishcontext'), "New context")] %}
-        <li><a href="{{ url }}">{{ caption }}</a></li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% if request.newsession %}
-    <!-- stuff about freshness of current session -->
-    <div class="notification">You just got a new session, Welcome !</div>
-    {% endif %}
-    <div id="status">
-      <h2>Current session status</h2>
-      <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
-      {% if request.session.contexts %}
-      <h3>Opened contexts and Handles</h3>
-      <ul>
-        {% for context in request.session.contexts %}
-        <li>{{ context.value|hex }}
-	      {%- if not context.closed_by -%}
-	      <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
-	      {%- else -%}
-	      (closed)
-	      {%- endif -%}
-	      <ul>
-	      {% for handle in context.handles %}
-	        <li>{{ handle.value|hex }} (on {{ handle.reader.name }})
-	        {%- if not handle.closed_by -%}
-	        <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
-	        {%- else -%}
-	        (closed)
-	        {%- endif -%}
-	        </li>
-	      {% endfor %}
-	      </ul>
-	    </li>
-        {% endfor %}
-      </ul>
+  	<div id="container">
+      <div id="header">
+        <h1>WebSCard</h1>
+        <p>A smartcard WSGI proxy</p>
+      </div>
+      <div id="navigation">
+        <ul>
+          {% for url, caption in [(url_for('welcome'), "Home"),(url_for('establishcontext'), "New context")] %}
+          <li><a href="{{ url }}">{{ caption }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% if request.new_session %}
+      <!-- stuff about freshness of current session -->
+      <div class="notification">You just got a new session, Welcome !</div>
       {% endif %}
-      <h3>Implementation</h3>
-      {{ request.implementation|e }}
-    </div>
-    <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
+      <div id="status">
+        <h2>Current session status</h2>
+        <ul><li><a href="{{ url_for('logforsession') }}">logs</a></li></ul>
+        {% if request.session.contexts %}
+        <h3>Opened contexts and Handles</h3>
+        <ul>
+          {% for context in request.session.contexts %}
+          <li>{{ context.value|hex }}
+	        {%- if not context.closed_by -%}
+	        <a href="{{ url_for('releasecontext', context=context.uid) }}">close</a>
+	        {%- endif -%}
+	        <ul>
+	        {% for handle in context.handles %}
+	          <li>{{ handle.value|hex }} (on {{ handle.reader.name }})
+	          {%- if not handle.closed_by -%}
+	          <a href="{{ url_for('disconnect', card=handle.uid) }}">close</a>
+	          {%- endif -%}
+	          </li>
+	        {% endfor %}
+	        </ul>
+        </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        <h3>Implementation</h3>
+        {{ request.implementation|e }}
+      </div>
+      <div id="body">{% block body %}<p>Nothing to declare</p>{% endblock %}</div>
+      <div id="footer" />
     <div id="footer">
       <!-- versions, fozen, blahlah -->
       This is <ul><li>WebSCard <span class="version">r0897b+</span> (not frozen)</li><li>Werkzeug <span class="version">0.7.8f</span></li><li>SQLAlchemy <span class="version">0.6.7g</span></li></ul> (This information is wrong)</span>

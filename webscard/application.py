@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine
 from werkzeug import ClosingIterator
 from werkzeug.exceptions import NotFound
+from werkzeug.wsgi import SharedDataMiddleware
 
 
-from webscard.utils import dbsession, local, local_manager, metadata, url_map
+from webscard.utils import dbsession, local, local_manager, metadata, url_map, get_static_dir
 from webscard import views, bonjour
 
 from webscard.models import handle, session, operation, apdu
@@ -23,8 +24,11 @@ class WebSCard(object):
         self.secret_key = config.getcookiesecret()
         chooser.initialize()
         bonjour.register(config.getport(), config.getimplementations())
+        self.dispatch = SharedDataMiddleware(self.dispatch, {
+            '/static': get_static_dir(),
+        })
 
-    def __call__(self, environ, start_response):
+    def dispatch(self, environ, start_response):
         local.application = self
         request = Request(environ)
         local.url_adapter = url_map.bind_to_environ(environ)
@@ -32,6 +36,9 @@ class WebSCard(object):
         return ClosingIterator(response(environ, start_response),
                                [dbsession.flush, dbsession.remove, 
                                 local_manager.cleanup])
+
+    def __call__(self, environ, start_response):
+        return self.dispatch(environ, start_response)
 
     def getresponse(self, request):
         try:
