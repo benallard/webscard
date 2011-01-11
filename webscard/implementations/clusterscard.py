@@ -10,6 +10,7 @@ from smartcard import scard as pyscard
 
 from webscard.utils import application
 
+#reader list
 LIST = []
 
 initialized = []
@@ -47,7 +48,7 @@ def _filterreaders(uid, readers):
         del LIST[reader]
     for reader in readers:
         LIST.append(reader)
-    limit = cfg.getinteger('clusterpyscard.limit', 1)
+    limit = cfg.getinteger('clusterscard.limit', 1)
     contextreaders = []
     if uid in served:
         for reader in readers:
