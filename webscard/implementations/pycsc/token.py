@@ -14,7 +14,7 @@ def swtotransmitres(sw):
 
 class Token(object):
     def __init__(self, name, config):
-        ATR = config.get(name, 'ATR')
+        ATR = config.getstring("%s.ATR" % name, "3B 00")
         ATR = ATR.split()
         self.ATR = map(lambda x: int(x, 16), ATR)
         self.applets = {}
