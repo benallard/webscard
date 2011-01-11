@@ -5,7 +5,13 @@ Mainly taken from the Werkzeug tutorial
 import imp, os, sys
 
 from werkzeug import Local, LocalManager
-from werkzeug.routing import Map, Rule
+from werkzeug.routing import Map, Rule, UnicodeConverter
+from werkzeug.urls import url_quote
+
+def unicodeconv_to_url(self, value):
+	return url_quote(value, self.map.charset, ':')
+
+UnicodeConverter.to_url = unicodeconv_to_url
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -18,7 +24,7 @@ metadata = MetaData()
 dbsession = scoped_session(sessionmaker(autocommit=True), 
                            local_manager.get_ident)
 
-url_map = Map([Rule('/static/<file>', endpoint='static', build_only=True)],redirect_defaults=False)
+url_map = Map([Rule('/static/<path:file>', endpoint='static', build_only=True)],redirect_defaults=False)
 def expose(rule, **kw):
     def decorate(f):
         kw['endpoint'] = f.__name__
