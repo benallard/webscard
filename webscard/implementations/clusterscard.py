@@ -13,7 +13,7 @@ from webscard.utils import application
 #reader list
 LIST = []
 
-initialized = []
+initialized = False
 
 # reader : session_uid
 TAKEN = {}
@@ -35,10 +35,17 @@ def acquire(session):
     return Implementation(session)
 
 def release(session):
+    global TAKEN
+    newtaken = {}
     for reader in TAKEN:
-        if TAKEN[reader] == session.uid:
-            del TAKEN[reader]
-    served.remove(session.uid)
+        if TAKEN[reader] != session.uid:
+            newtaken[reader] = TAKEN[reader]
+    TAKEN = newtaken
+    if session.uid in served:
+        served.remove(session.uid)
+        return True
+    else:
+        return False
             
 
 def _filterreaders(uid, readers):
