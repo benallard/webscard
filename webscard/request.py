@@ -36,14 +36,24 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     def getsession(self):
         session_data = self.client_session
+        session = None
         if ('sid' in session_data) and (session_data['sid'] is not None):
-            self.session = Session.query.get(session_data['sid'])
-            self.session.update()
-        else:
+            session = Session.query.get(session_data['sid'])
+            if session.closedby is not None:
+                # session expired ...
+                session = None
+            else:
+                session.update()
+
+        if session is None:
             print "---------------------------new session !"
-            self.session = Session(self)
-            chooser.acquire(self.session)
+            session = Session(self)
+            chooser.acquire(session)
             self.newsession = True
+        else:
+            print "using session %d" % session.uid
+
+        self.session = session 
 
     def storesession(self, response):
         if self.newsession:
