@@ -60,7 +60,10 @@ def _filterreaders(uid, readers):
         for reader in readers:
             if reader not in TAKEN:
                 free.append(reader)
-        contextreaders = random.sample(free, limit)
+        if len(free) == 0:
+            contestreaders = []
+        else:
+            contextreaders = random.sample(free, limit)
         for reader in contextreaders:
             TAKEN[reader] = uid
         served.append(uid)
