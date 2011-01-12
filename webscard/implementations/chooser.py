@@ -5,7 +5,7 @@ import ConfigParser
 from webscard.utils import application, loadpath
 
 from webscard.implementations import MAP, MAPMUTEX, POOL
-
+from webscard.implementations import gc
 
 def createimpl(name):
     cfg = application.config
@@ -104,18 +104,28 @@ def instanciateimpl(impl, session):
             implinst = impl['impl']
     return implinst
 
+def getcandidates():
+    free = []
+    for candidate in POOL:
+        if candidate['hard']:
+            if candidate['free']():
+                free.append(candidate)
+        else:
+            free.append(candidate)
+    return free
+
 def acquire(session):
     print "acquire (%d)" % session.uid
-    free = []
-    for impl in POOL:
-        if impl['hard']:
-            if impl['free']():
-                free.append(impl)
-        else:
-            free.append(impl)
+    free = getcandidates()
 
+    if len(free) == 0:
+        gc.run(session)
     
-    if len(free) != 0:
+    free = getcandidates()
+
+    if len(free) == 0:
+        impl = createimpl('empty')
+    else:
         impl = random.choice(free)
 
     implinst = instanciateimpl(impl, session)
