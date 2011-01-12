@@ -39,8 +39,10 @@ def releaseoldestexpiredsession(name, current):
             session = Session.query.get(session_uid)
             inactivity = session.inactivity()
             if inactivity > badinactivity:
-                bad = session_uid
+                bad = session
                 badinactivity = inactivity
+            else:
+                print "inactivity too short: %s" % inactivity
     MAPMUTEX.release()
     if bad is not None:
         release(bad, current)
