@@ -12,7 +12,6 @@ from werkzeug import cached_property
 
 from webscard.utils import dbsession, metadata
 from webscard.models.handle import Context, Handle
-from webscard.implementations import chooser
 
 from smartcard.scard import SCARD_E_INVALID_HANDLE, SCARD_E_INVALID_PARAMETER
 
@@ -28,7 +27,6 @@ SESSION_TABLE = Table('sessions', metadata,
 class Session(object):
     """ We store here HTTP session """
     query = dbsession.query_property()
-    impl = None
 
     def __init__(self, request):
         self.user_agent = request.headers.get('User-Agent')
@@ -38,7 +36,6 @@ class Session(object):
         self.update()
         dbsession.add(self)
         dbsession.flush()
-        self.impl = chooser.acquire(self)
 
     def validatecontext(self, context_uid):
         """ Does the context belong to this session """
@@ -69,10 +66,6 @@ class Session(object):
                                                                 self.uid),
                     'hresult': SCARD_E_INVALID_HANDLE}
         return None
-
-    @cached_property
-    def implementation(self):
-        return chooser.get(self)
 
     def __repr__(self):
         return "<session #%d, %d contexts, inactive for %s>" % (
