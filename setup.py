@@ -5,7 +5,7 @@ import py2exe
 
 packages= ['webscard', 'webscard.models', 'webscard.bonjour',
            'webscard.bonjour.zc', 'webscard.implementations', 'webscard.icon',
-           'webscard.implementations.pycsc']
+           'webscard.implementations.pycsc',]
 
 class Target:
     def __init__(self, **kw):
@@ -43,6 +43,8 @@ setup(
                 data_files('templates', '.html'),
                 data_files('static')],
     options={'py2exe': {
-            "packages":["sqlalchemy.dialects.sqlite", "pybonjour"],
+            "packages":["sqlalchemy.dialects.sqlite", "pybonjour",
+                        "webscard.implementations.empty", 
+                        "webscard.implementations.clusterscard"],
             "excludes":["Tkconstants", "tcl", "Tkinter"],
 }})
