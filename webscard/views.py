@@ -222,3 +222,7 @@ def logforsession(request, sid):
 def sessionlist(request):
     sessions = dbsession.query(Session).all()
     return render(request, {'sessions': sessions})
+
+@expose('/help')
+def help(request):
+    return render(request, {})
