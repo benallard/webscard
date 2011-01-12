@@ -22,7 +22,7 @@ class Handle(object):
 
     @property
     def val(self):
-        return long(self.value)
+        return long(self.value or 1)
 
 mapper(Handle, handle_table)
 
@@ -44,7 +44,7 @@ class Context(object):
 
     @property
     def val(self):
-        return long(self.value)
+        return long(self.value or 1)
 
 mapper(Context, context_table, properties={
     'handles': relation(Handle, backref='context'),
