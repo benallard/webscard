@@ -42,10 +42,11 @@ def release(session):
             
 
 def _filterreaders(uid, readers):
+    global LIST
+    global initialized
     cfg = application.config
-    initialized.append(True)
-    for reader in LIST:
-        del LIST[reader]
+    initialized = True
+    LIST = []
     for reader in readers:
         LIST.append(reader)
     limit = cfg.getinteger('clusterscard.limit', 1)
