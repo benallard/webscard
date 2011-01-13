@@ -2,7 +2,7 @@ from sqlalchemy import Table, Column, Integer, Float, DateTime, String
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapper, relation, backref
 
-from webscard.utils import dbsession, metadata
+from webscard.utils import dbsession, metadata, stringify
 
 from webscard.models.handle import Context, Handle
 from webscard.models.apdu import APDU
