@@ -50,8 +50,6 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
             session = Session(self)
             chooser.acquire(session)
             self.newsession = True
-        else:
-            print "using session %d" % session.uid
 
         self.session = session 
 

@@ -9,7 +9,10 @@ from webscard.utils import get_main_dir
 
 config = Config(os.path.join(get_main_dir(), 'webscard.cfg'))
 
-app = TransLogger(WebSCard(config))
+if config.getbool('logger.web', False):
+    app = TransLogger(WebSCard(config))
+else:
+    app = WebSCard(config)
 
 server = wsgiserver.CherryPyWSGIServer((config.gethost(), config.getport()), app)
 try:
