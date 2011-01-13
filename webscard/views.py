@@ -81,7 +81,7 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
         hContext.val, szReader, dwSharedMode, dwPreferredProtocols)
     after = datetime.now()
     hCard = Handle(hCard, hContext)
-    logger.logoutput(opuid, hresult, hCard=hCard,
+    logger.logoutput(opuid, hresult, hCard=hCard.uid,
                      dwActiveProtocol=dwActiveProtocol, time=after)
     return render(request, {"hresult":hresult, "hCard":hCard.uid,
                             "dwActiveProtocol":dwActiveProtocol})
@@ -167,7 +167,7 @@ def disconnect(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, dwDisposition=dwDisposition, hCard=hCard)
+    opuid = logger.loginput(hContext, dwDisposition=dwDisposition, hCard=hCard.uid)
     hresult = impl.SCardDisconnect(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
     return render( request, {"hresult": hresult})

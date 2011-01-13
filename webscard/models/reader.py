@@ -16,8 +16,6 @@ class Reader(object):
 
     def __init__(self, name):
         self.name = name
-        dbsession.add(self)
-        dbsession.flush()
 
     @classmethod
     def get(cls, szReader):

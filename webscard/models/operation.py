@@ -23,10 +23,8 @@ class Operation(object):
 
     def __init__(self, name, context, **params):
         self.name = name
-        self.context = context
+        self.context = Context.query.get(context)
         self.initiated = params.get('time')
-        dbsession.add(self)
-        dbsession.flush()
 
     def performed(self, hresult,  **params):
         self.result = hresult
@@ -93,7 +91,7 @@ class Connect(Operation):
 
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
-        self.hCard = params['hCard']
+        self.hCard = Handle.query.get(params['hCard'])
         self.hCard.reader = self.reader
         self.activeprotocol = params['dwActiveProtocol']
 mapper(Connect, connect_table, inherits=Operation, polymorphic_identity='connect',
@@ -109,7 +107,7 @@ disconnect_table = Table('disconnects', metadata,
 class Disconnect(Operation):
     def __init__(self, name, context, **params):
         Operation.__init__(self, name, context, **params)
-        self.hCard = params['hCard']
+        self.hCard = Handle.query.get(params['hCard'])
         self.disposition = params['dwDisposition']
 mapper(Disconnect, disconnect_table, inherits=Operation, polymorphic_identity='disconnect',
        properties={'hCard':relation(Handle, backref='closed_by')}

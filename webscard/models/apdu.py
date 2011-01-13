@@ -23,8 +23,6 @@ class APDU(object):
 
     def __init__(self, bytesarr):
         self.command = bytesarr
-        dbsession.add(self)
-        dbsession.flush()
 
     def received(self, bytesarr):
         response = bytesarr
