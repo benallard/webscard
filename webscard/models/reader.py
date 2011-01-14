@@ -4,7 +4,7 @@ from sqlalchemy.orm import mapper, relation
 
 from webscard.utils import dbsession, metadata
 
-from webscard.models.handle import Context, Handle
+from webscard.models.handle import Handle
 
 reader_table = Table('readers', metadata,
     Column('uid', Integer, primary_key=True),
