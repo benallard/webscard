@@ -7,6 +7,7 @@ from webscard.utils import dbsession, metadata, stringify
 from webscard.models.handle import Context, Handle
 from webscard.models.apdu import APDU
 from webscard.models.reader import Reader
+from webscard.models.atr import ATR
 
 operation_table = Table('operations', metadata,
     Column('uid', Integer, primary_key=True),
@@ -137,11 +138,32 @@ mapper(ReleaseContext, releasecontext_table, inherits=Operation, polymorphic_ide
        properties={'context':relation(Context, backref='closed_by')}
 )
 
+status_table = Table('statuses', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('handle_uid', Integer, ForeignKey('handles.uid')),
+    Column('reader_uid', Integer, ForeignKey('readers.uid')),
+    Column('state', Integer),
+    Column('protocol', Integer),
+    Column('atr_uid', Integer, ForeignKey('atrs.uid')),
+)
+class Status(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.hCard = Handle.query.get(params['hCard'])
+    def performed(self, hresult, **params):
+        Operation.performed(self, hresult, **params)
+        self.reader = Reader.get(params['szReaderName'])
+        self.state = params['dwState']
+        self.protocol = params['dwProtocol']
+        self.ATR = ATR.get(params['ATR'])
+mapper(Status, status_table, inherits=Operation, polymorphic_identity='status',
+       properties={'hCard':relation(Handle),
+                   'reader': relation(Reader),
+                   'ATR':relation(ATR),},
+)
 class GetStatusChange(Operation):
     pass
 
-class Status(Operation):
-    pass
 
 class ListReaders(Operation):
     pass
@@ -153,6 +175,7 @@ classdict = {
     'disconnect': Disconnect,
     'establishcontext': EstablishContext,
     'releasecontext': ReleaseContext,
+    'status': Status,
 }
 
 def getclassfor(name):

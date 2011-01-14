@@ -120,7 +120,7 @@ def control(request, card, dwControlCode, inbuffer):
 def status(request, card):
     hCard = Handle.query.get(card)
     impl = request.implementation
-    opuid = logger.loginput(hCard.context)
+    opuid = logger.loginput(hCard.context, hCard=card)
     hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard.val)
     logger.logoutput(opuid, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
     return render(request, hresult=hresult, szReaderName=readername, 
