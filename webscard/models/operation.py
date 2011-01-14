@@ -152,10 +152,11 @@ class Status(Operation):
         self.hCard = Handle.query.get(params['hCard'])
     def performed(self, hresult, **params):
         Operation.performed(self, hresult, **params)
-        self.reader = Reader.get(params['szReaderName'])
+        if hresult == 0:
+            self.reader = Reader.get(params['szReaderName'])
+            self.ATR = ATR.get(params['ATR'])
         self.state = params['dwState']
         self.protocol = params['dwProtocol']
-        self.ATR = ATR.get(params['ATR'])
 mapper(Status, status_table, inherits=Operation, polymorphic_identity='status',
        properties={'hCard':relation(Handle),
                    'reader': relation(Reader),
