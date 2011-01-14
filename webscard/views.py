@@ -16,7 +16,7 @@ from webscard.models.session import Session
 
 @expose('/')
 def welcome(request):
-    return render(request, {})
+    return render(request)
 
 @expose('/EstablishContext', defaults={'dwScope': 0})
 @expose('/EstablishContext/<int:dwScope>')
@@ -30,7 +30,7 @@ def establishcontext(request, dwScope):
     hContext = Context(request.session, hContext, impl)
     opuid = logger.loginput(hContext, dwScope=dwScope, time=before)
     logger.logoutput(opuid, hresult, time=after)
-    return render(request, {"hresult":hresult, "hcontext":hContext.uid})
+    return render(request, hresult=hresult, hcontext=hContext.uid)
 
 @expose('/<int:context>/ListReaders', defaults={'mszGroups': "[]"})
 @expose('/<int:context>/ListReaders/<mszGroups>')
@@ -41,7 +41,7 @@ def listreaders(request, context, mszGroups):
     opuid = logger.loginput(hContext, readergroup=mszGroups)
     hresult, readers = impl.SCardListReaders( hContext.val, mszGroups )
     logger.logoutput(opuid, hresult, mszReaders=readers)
-    return render(request, {"hresult":hresult, "mszReaders":readers})
+    return render(request, hresult=hresult, mszReaders=readers)
 
 @expose('/<int:context>/GetStatusChange/<rgReaderStates>', defaults={'dwTimeout':60000})
 @expose('/<int:context>/GetStatusChange/<dwTimeout>/<rgReaderStates>')
@@ -64,7 +64,7 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
     opuid = logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
     hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, ReaderStates )
     logger.logoutput(opuid, hresult, rgReaderStates=states)
-    return render(request, {"hresult":hresult, "rgReaderStates":states})
+    return render(request, hresult=hresult, rgReaderStates=states)
 
 @expose('/<int:context>/Connect/<szReader>',
         defaults={'dwSharedMode': 2, 'dwPreferredProtocols': 3})
@@ -83,8 +83,8 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
     hCard = Handle(hCard, hContext)
     logger.logoutput(opuid, hresult, hCard=hCard.uid,
                      dwActiveProtocol=dwActiveProtocol, time=after)
-    return render(request, {"hresult":hresult, "hCard":hCard.uid,
-                            "dwActiveProtocol":dwActiveProtocol})
+    return render(request, hresult=hresult, hCard=hCard.uid,
+                  dwActiveProtocol=dwActiveProtocol)
 
 @expose('/<int:card>/Reconnect', defaults={"dwShareMode":2,
                                            "dwPreferredProtocols":3,
@@ -102,7 +102,7 @@ def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation
                             dwInitialisation=dwInitialisation)
     hresult, dwActiveProtocol = impl.SCardReconnect(hCard.val, dwShareMode, dwPreferredProtocols, dwInitialisation)
     logger.logoutput(opuid, hresult, dwInitialisation=dwInitialisation)
-    return render(request, {"hresult":hresult, "dwActiveProtocol":dwActiveProtocol})
+    return render(request, hresult=hresult, dwActiveProtocol=dwActiveProtocol)
 
 @expose('/<int:card>/Control/<int:dwControlCode>/<inbuffer>')
 def control(request, card, dwControlCode, inbuffer):
@@ -112,7 +112,7 @@ def control(request, card, dwControlCode, inbuffer):
     opuid = logger.loginput(hCard.context, dwControlCode=dwControlCode, inbuffer=inbuffer)
     hresult, response = impl.SCardControl(hCard.val, dwControlCode, inbuffer)
     logger.logoutput(opuid, hresult, outbuffer=response)
-    return render(request, {"hresult": hresult, "outbuffer": response})
+    return render(request, hresult=hresult, outbuffer=response)
 
 
 @expose('/<int:card>/Status')
@@ -122,8 +122,8 @@ def status(request, card):
     opuid = logger.loginput(hCard.context)
     hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard.val)
     logger.logoutput(opuid, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
-    return render(request, {"hresult":hresult, "szReaderName":readername, 
-        "dwState":dwState, "dwProtocol":dwProtocol, "ATR":ATR})
+    return render(request, hresult=hresult, szReaderName=readername, 
+                  dwState=dwState, dwProtocol=dwProtocol, ATR=ATR)
 
 
 @expose('/<int:card>/BeginTransaction')
@@ -134,7 +134,7 @@ def begintransaction(request, card):
     opuid = logger.loginput(hContext)
     hresult = impl.SCardBeginTransaction(hCard.val)
     logger.logoutput(opuid, hresult)
-    return render(request, {'hresult': hresult})
+    return render(request, hresult=hresult)
 
 
 @expose('/<int:card>/EndTransaction', defaults={'dwDisposition':0})
@@ -146,7 +146,7 @@ def endtransaction(request, card, dwDisposition):
     opuid = logger.loginput(hContext, dwDisposition=dwDisposition)
     hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
-    return render(request, {'hresult': hresult})
+    return render(request, hresult=hresult)
 
 
 @expose('/<int:card>/Transmit/<apdu>', defaults={'dwProtocol': 2})
@@ -159,7 +159,7 @@ def transmit(request, card, dwProtocol, apdu):
     opuid = logger.loginput(hContext, dwProtocol=dwProtocol, apdu=apdu)
     hresult, response = impl.SCardTransmit(hCard.val, dwProtocol, apdu)
     logger.logoutput(opuid, hresult, response=response)
-    return render(request, {"hresult": hresult, "response": response})
+    return render(request, hresult=hresult, response=response)
 
 @expose('/<int:card>/Disconnect', defaults={'dwDisposition': 0})
 @expose('/<int:card>/Disconnect/<int:dwDisposition>')
@@ -170,7 +170,7 @@ def disconnect(request, card, dwDisposition):
     opuid = logger.loginput(hContext, dwDisposition=dwDisposition, hCard=hCard.uid)
     hresult = impl.SCardDisconnect(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
-    return render( request, {"hresult": hresult})
+    return render( request, hresult=hresult)
 
 @expose('/<int:context>/Cancel')
 def cancel(request, context):
@@ -179,7 +179,7 @@ def cancel(request, context):
     opuid = logger.loginput(hContext)
     hresult = impl.SCardCancel(hContext.val)
     logger.logoutput(opuid, hresult)
-    return render(request, {"hresult":hresult})
+    return render(request, hresult=hresult)
     
 
 @expose('/<int:context>/ReleaseContext')
@@ -189,7 +189,7 @@ def releasecontext(request, context):
     opuid = logger.loginput(hContext)
     hresult = impl.SCardReleaseContext(hContext.val)
     logger.logoutput(opuid, hresult)
-    return render(request, {"hresult":hresult})
+    return render(request, hresult=hresult)
 
 @expose('/soap/v<int:version>')
 def soapv(request, version):
@@ -205,7 +205,7 @@ def logforcontext(request, logcontext):
     Gets the logs for a particular context
     """
     ctx = Context.query.get(logcontext)
-    return render(request, {"context": ctx})
+    return render(request, context=ctx)
 
 @expose('/log', defaults={'sid':None})
 @expose('/log/<int:sid>')
@@ -216,7 +216,7 @@ def logforsession(request, sid):
     if sid is None:
         sid = request.session.uid
     sess = Session.query.get(sid)
-    return render(request, {"session": sess})
+    return render(request, session=sess)
 
 @expose('/sessions')
 def sessionlist(request):
@@ -225,4 +225,4 @@ def sessionlist(request):
 
 @expose('/help')
 def help(request):
-    return render(request, {})
+    return render(request)
