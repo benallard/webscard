@@ -132,7 +132,7 @@ def begintransaction(request, card):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext)
+    opuid = logger.loginput(hContext, hCard=card)
     hresult = impl.SCardBeginTransaction(hCard.val)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)
@@ -144,7 +144,7 @@ def endtransaction(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, dwDisposition=dwDisposition)
+    opuid = logger.loginput(hContext, hCard=card, dwDisposition=dwDisposition)
     hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)

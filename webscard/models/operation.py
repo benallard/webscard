@@ -8,6 +8,7 @@ from webscard.models.handle import Context, Handle
 from webscard.models.apdu import APDU
 from webscard.models.reader import Reader
 from webscard.models.atr import ATR
+from webscard.models.transaction import Transaction
 
 operation_table = Table('operations', metadata,
     Column('uid', Integer, primary_key=True),
@@ -162,12 +163,47 @@ mapper(Status, status_table, inherits=Operation, polymorphic_identity='status',
                    'reader': relation(Reader),
                    'ATR':relation(ATR),},
 )
-class GetStatusChange(Operation):
-    pass
 
+begintransaction_table = Table('begintransactions', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('handle_uid', Integer, ForeignKey('handles.uid')),
+    Column('transaction_uid', Integer, ForeignKey('transactions.uid')),
+)
+class BeginTransaction(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.hCard = Handle.query.get(params['hCard'])
+    def performed(self, hresult, **params):
+        Operation.performed(self, hresult, **params)
+        if (hresult == 0):
+            self.transaction = Transaction(self.hCard)
+mapper(BeginTransaction, begintransaction_table, inherits=Operation, polymorphic_identity='begintransaction',
+       properties={'hCard':relation(Handle),
+                   'transaction':relation(Transaction, backref=backref('opened_by', uselist=False))},
+)
 
-class ListReaders(Operation):
-    pass
+endtransaction_table = Table('endtransactions', metadata,
+    Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
+    Column('handle_uid', Integer, ForeignKey('handles.uid')),
+    Column('disposition', Integer),
+    Column('transaction_uid', Integer, ForeignKey('transactions.uid')),
+)
+class EndTransaction(Operation):
+    def __init__(self, name, context, **params):
+        Operation.__init__(self, name, context, **params)
+        self.hCard = Handle.query.get(params['hCard'])
+        self.disposition = params['dwDisposition']
+    def performed(self, hresult, **params):
+        Operation.performed(self, hresult, **params)
+        if (hresult == 0):
+            for transaction in reversed(self.hCard.transactions):
+                if not transaction.closed_by:
+                    self.transaction = transaction
+                    break
+mapper(EndTransaction, endtransaction_table, inherits=Operation, polymorphic_identity='endtransaction',
+       properties={'hCard':relation(Handle),
+                   'transaction':relation(Transaction, backref=backref('closed_by', uselist=False))},
+)
 
 classdict = {
     'transmit': Transmit,
@@ -177,6 +213,8 @@ classdict = {
     'establishcontext': EstablishContext,
     'releasecontext': ReleaseContext,
     'status': Status,
+    'begintransaction': BeginTransaction,
+    'endtransaction': EndTransaction,
 }
 
 def getclassfor(name):
