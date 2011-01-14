@@ -10,6 +10,7 @@ from webscard import logger, soap
 
 from webscard.utils import expose, dbsession, unsigned_long
 from webscard.render import render
+from webscard.page import Pagination
 
 from webscard.models.handle import Context, Handle
 from webscard.models.session import Session
@@ -218,10 +219,14 @@ def logforsession(request, sid):
     sess = Session.query.get(sid)
     return render(request, session=sess)
 
-@expose('/sessions')
-def sessionlist(request):
-    sessions = dbsession.query(Session).all()
-    return render(request, {'sessions': sessions})
+@expose('/sessions', defaults={'page': 1})
+@expose('/sessions/<int:page>')
+def sessionlist(request, page):
+    query = Session.query
+    pagination = Pagination(query, 30, page, 'sessionlist')
+    if pagination.page > 1 and not pagination.entries:
+        raise NotFound()
+    return render(request, pagination=pagination)
 
 @expose('/help')
 def help(request):
