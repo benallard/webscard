@@ -29,7 +29,7 @@ def establishcontext(request, dwScope):
     after = datetime.now()
 
     hContext = Context(request.session, hContext, impl)
-    opuid = logger.loginput(hContext, dwScope=dwScope, time=before)
+    opuid = logger.loginput(request, hContext, dwScope=dwScope, time=before)
     logger.logoutput(opuid, hresult, time=after)
     return render(request, hresult=hresult, hcontext=hContext.uid)
 
@@ -39,7 +39,7 @@ def listreaders(request, context, mszGroups):
     hContext = Context.query.get(context)
     impl = request.implementation
     mszGroups = json.loads(url_unquote(mszGroups))
-    opuid = logger.loginput(hContext, readergroup=mszGroups)
+    opuid = logger.loginput(request, hContext, readergroup=mszGroups)
     hresult, readers = impl.SCardListReaders( hContext.val, mszGroups )
     logger.logoutput(opuid, hresult, mszReaders=readers)
     return render(request, hresult=hresult, mszReaders=readers)
@@ -62,7 +62,7 @@ def getstatuschange(request, context, dwTimeout, rgReaderStates):
         except IndexError:
             pass
         ReaderStates.append(res)
-    opuid = logger.loginput(hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
+    opuid = logger.loginput(request, hContext, dwTimeout=dwTimeout, rgReaderStates=ReaderStates)
     hresult, states = impl.SCardGetStatusChange( hContext.val, dwTimeout, ReaderStates )
     logger.logoutput(opuid, hresult, rgReaderStates=states)
     return render(request, hresult=hresult, rgReaderStates=states)
@@ -76,7 +76,7 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
     hContext = Context.query.get(context)
     impl = request.implementation
     szReader = str(url_unquote(szReader))
-    opuid = logger.loginput(hContext, szReader=szReader, dwSharedMode=dwSharedMode,
+    opuid = logger.loginput(request, hContext, szReader=szReader, dwSharedMode=dwSharedMode,
                     dwPreferredProtocols=dwPreferredProtocols)
     hresult, hCard, dwActiveProtocol = impl.SCardConnect(
         hContext.val, szReader, dwSharedMode, dwPreferredProtocols)
@@ -98,7 +98,7 @@ def connect(request, context, szReader, dwSharedMode, dwPreferredProtocols):
 def reconnect(request, card, dwShareMode, dwPreferredProtocols, dwInitialisation):
     hCard = Handle.query.get(card)
     impl = request.implementation
-    opuid = logger.loginput(hCard.context, dwShareMode=dwShareMode, 
+    opuid = logger.loginput(request, hCard.context, dwShareMode=dwShareMode, 
                             dwPreferredProtocols=dwPreferredProtocols, 
                             dwInitialisation=dwInitialisation)
     hresult, dwActiveProtocol = impl.SCardReconnect(hCard.val, dwShareMode, dwPreferredProtocols, dwInitialisation)
@@ -110,7 +110,7 @@ def control(request, card, dwControlCode, inbuffer):
     hCard = Handle.query.get(card)
     impl = request.implementation
     inbuffer = json.loads(url_unquote(inbuffer))
-    opuid = logger.loginput(hCard.context, dwControlCode=dwControlCode, inbuffer=inbuffer)
+    opuid = logger.loginput(request, hCard.context, dwControlCode=dwControlCode, inbuffer=inbuffer)
     hresult, response = impl.SCardControl(hCard.val, dwControlCode, inbuffer)
     logger.logoutput(opuid, hresult, outbuffer=response)
     return render(request, hresult=hresult, outbuffer=response)
@@ -120,7 +120,7 @@ def control(request, card, dwControlCode, inbuffer):
 def status(request, card):
     hCard = Handle.query.get(card)
     impl = request.implementation
-    opuid = logger.loginput(hCard.context, hCard=card)
+    opuid = logger.loginput(request, hCard.context, hCard=card)
     hresult, readername, dwState, dwProtocol, ATR = impl.SCardStatus(hCard.val)
     logger.logoutput(opuid, hresult, szReaderName = readername, dwState = dwState, dwProtocol = dwProtocol, ATR = ATR)
     return render(request, hresult=hresult, szReaderName=readername, 
@@ -132,7 +132,7 @@ def begintransaction(request, card):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, hCard=card)
+    opuid = logger.loginput(request, hContext, hCard=card)
     hresult = impl.SCardBeginTransaction(hCard.val)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)
@@ -144,7 +144,7 @@ def endtransaction(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, hCard=card, dwDisposition=dwDisposition)
+    opuid = logger.loginput(request, hContext, hCard=card, dwDisposition=dwDisposition)
     hresult = impl.SCardEndTransaction(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)
@@ -157,7 +157,7 @@ def transmit(request, card, dwProtocol, apdu):
     hContext = hCard.context
     impl = request.implementation
     apdu = json.loads(url_unquote(apdu))
-    opuid = logger.loginput(hContext, dwProtocol=dwProtocol, apdu=apdu)
+    opuid = logger.loginput(request, hContext, dwProtocol=dwProtocol, apdu=apdu)
     hresult, response = impl.SCardTransmit(hCard.val, dwProtocol, apdu)
     logger.logoutput(opuid, hresult, response=response)
     return render(request, hresult=hresult, response=response)
@@ -168,7 +168,7 @@ def disconnect(request, card, dwDisposition):
     hCard = Handle.query.get(card)
     hContext = hCard.context
     impl = request.implementation
-    opuid = logger.loginput(hContext, dwDisposition=dwDisposition, hCard=hCard.uid)
+    opuid = logger.loginput(request, hContext, dwDisposition=dwDisposition, hCard=hCard.uid)
     hresult = impl.SCardDisconnect(hCard.val, dwDisposition)
     logger.logoutput(opuid, hresult)
     return render( request, hresult=hresult)
@@ -177,7 +177,7 @@ def disconnect(request, card, dwDisposition):
 def cancel(request, context):
     hContext = Context.query.get(context)
     impl = request.implementation
-    opuid = logger.loginput(hContext)
+    opuid = logger.loginput(request, hContext)
     hresult = impl.SCardCancel(hContext.val)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)
@@ -187,7 +187,7 @@ def cancel(request, context):
 def releasecontext(request, context):
     hContext = Context.query.get(context)
     impl = request.implementation
-    opuid = logger.loginput(hContext)
+    opuid = logger.loginput(request, hContext)
     hresult = impl.SCardReleaseContext(hContext.val)
     logger.logoutput(opuid, hresult)
     return render(request, hresult=hresult)
