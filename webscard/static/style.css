@@ -74,7 +74,7 @@ body {
   background: white;
   border: 2px solid #aaa;
   margin-right: 20px;
-  padding: 5px
+  padding: 5px 170px 5px 5px;
 }
 
 /* http://colinaarts.com/articles/float-containment/ */
@@ -89,7 +89,7 @@ body {
 #status {
   float: right;
   background: white;
-  margin: 40px -40px 0 0;
+  margin: 40px -220px 0 0;
   width: 200px;
   border-style: solid solid none none;
   border-width: 2px;
