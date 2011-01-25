@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String
+from sqlalchemy import Table, Column, Integer, Text
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapper, relation
 
@@ -6,7 +6,7 @@ from webscard.utils import dbsession, metadata, stringify
 
 atr_table = Table('atrs', metadata,
     Column('uid', Integer, primary_key=True),
-    Column('canonical', String),
+    Column('canonical', Text),
 )
 
 class ATR(object):
