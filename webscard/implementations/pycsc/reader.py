@@ -80,6 +80,12 @@ class Reader(object):
             return scard.SCARD_E_INVALID_HANDLE, []
         return self.token.transmit(apdubytes)
 
+    def Status(self, card):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE, self.name, 0, 0, []
+        # 0x10 is SCARD_POWERED
+        return scard.SCARD_S_SUCCESS, self.name, 0x10, self.cards[card], self.token.ATR
+
 class CardRLock(object):
     """ A kind of RLock, but based on hCard instead of thread """
     def __init__(self):
