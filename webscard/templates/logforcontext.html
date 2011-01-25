@@ -5,7 +5,7 @@
   <span>Operations</span>
 <ul>
   {% for op in context.operations %}
-  <li>{{ op.name }}, {{ op.duration }} => {{ op.result }}</li>
+  <li>{{ op.name }}, {{ op.duration }} => {{ SCardError(op.result) }}</li>
   {% endfor %}
 </ul>
 </div>
@@ -13,7 +13,12 @@
   <span>Handles</span>
   <ul>
   {% for hdl in context.handles %}
-    <li>{{ hdl.value|hex }}</li>
+    <li>
+      {{ hdl.value|hex }}
+      {% if hdl.transactions %}
+      ({{ hdl.transactions|count }} transactions opened)
+      {% endif %}
+    </li>
   {% endfor %}
   </ul>
 </div>

@@ -17,8 +17,8 @@ body {
   border-width: 2px;
   border-color: #aaa;
   border-style: none solid solid none;
-  border-bottom-right-radius: 5em;
-  border-top-left-radius: 5em;
+  border-bottom-right-radius: 5em 5em;
+  border-top-left-radius: 5em 5em;
 }
 
 #header h1 {
@@ -30,6 +30,15 @@ body {
   position: absolute;
   left: 0.5em;
   bottom: 0;
+}
+
+.notification {
+  background: white;
+  border-width: 1px;
+  border-color: #aaa;
+  border-style: none solid solid none;
+  border-bottom-right-radius: 2em 2em;
+  border-top-left-radius: 2em 2em;
 }
 
 #nav-container {
@@ -57,8 +66,8 @@ body {
   border-width: 2px;
   border-color: #aaa;
   border-style: solid solid none solid;
-  border-top-left-radius: 1em;
-  border-top-right-radius: 1em;
+  border-top-left-radius: 1em 1em;
+  border-top-right-radius: 1em 1em;
 }
 
 #body {
@@ -85,13 +94,13 @@ body {
   border-style: solid solid none none;
   border-width: 2px;
   border-color: #aaa;
-  border-top-right-radius: 3em;
+  border-top-right-radius: 3em 3em;
 }
 
 #suggestions {
   border: 1px solid #aaa;
-  border-bottom-left-radius: 2em;
-  border-top-right-radius: 2em;
+  border-bottom-left-radius: 2em 2em;
+  border-top-right-radius: 2em 2em;
 }
 
 #footer {
@@ -101,10 +110,11 @@ body {
   border-style: solid none none solid;
   border-width: 2px;
   border-color: #aaa;
-  border-top-left-radius: 1em;
-  border-bottom-right-radius: 1em;
+  border-top-left-radius: 1em 1em;
+  border-bottom-right-radius: 1em 1em;
 }
 
+/* taken from BitBucket.org */
 #technologies li + li::before {
   content: ' / ';
   padding: 0px 4px;

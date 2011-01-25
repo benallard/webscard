@@ -10,6 +10,8 @@ from webscard.render import render
 from webscard.utils import application
 from webscard.models.session import Session
 
+from webscard.implementations import chooser
+
 from webscard import soap
 
 COOKIENAME = 'session_data'
@@ -23,6 +25,7 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
     def __init__(self, environ, **kw):
         BaseRequest.__init__(self, environ, kw)
         self.getsession()
+        self.implementation = chooser.get(self.session)
 
     @cached_property
     def client_session(self):
@@ -33,17 +36,22 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
 
     def getsession(self):
         session_data = self.client_session
+        session = None
         if ('sid' in session_data) and (session_data['sid'] is not None):
-            self.session = Session.query.get(session_data['sid'])
-            self.session.update()
-        else:
+            session = Session.query.get(session_data['sid'])
+            if session.closedby is not None:
+                # session expired ...
+                session = None
+            else:
+                session.update()
+
+        if session is None:
             print "---------------------------new session !"
-            self.session = Session(self)
+            session = Session(self)
+            chooser.acquire(session)
             self.newsession = True
 
-    @cached_property
-    def implementation(self):
-        return self.session.implementation
+        self.session = session 
 
     def storesession(self, response):
         if self.newsession:

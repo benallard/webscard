@@ -8,13 +8,13 @@
     It went successfully and ...
     <p>This operation gave the following output</p>
     {% block output %}{% endblock %}
+    <div id="suggestions">
+      <h2> Suggestions </h2>
+      <ul>{% block suggestions %}No suggestions{% endblock %}</ul>
+    </div>
   {% else %}
     There has been an error during the execution of this operation:
     {{ SCardError(hresult) }}
   {% endif %}
-</div>
-<div id="suggestions">
-  <h2> Suggestions </h2>
-  <ul>{% block suggestions %}No suggestions{% endblock %}</ul>
 </div>
 {% endblock %}

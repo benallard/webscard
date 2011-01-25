@@ -11,5 +11,6 @@ SCardConnect()
 <p>The new Handle is #{{ hCard }}</p>
 {% endblock %}
 {% block suggestions %}
+<li><a href="{{ url_for('status', card=hCard) }}">Request the Status of this reader</a></li>
 <li><a href="{{ url_for('begintransaction', card=hCard) }}">Begin a Transaction</a></li>
 {% endblock %}

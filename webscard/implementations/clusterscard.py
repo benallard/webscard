@@ -13,7 +13,7 @@ from webscard.utils import application
 #reader list
 LIST = []
 
-initialized = []
+initialized = False
 
 # reader : session_uid
 TAKEN = {}
@@ -35,17 +35,25 @@ def acquire(session):
     return Implementation(session)
 
 def release(session):
+    global TAKEN
+    newtaken = {}
     for reader in TAKEN:
-        if TAKEN[reader] == session.uid:
-            del TAKEN[reader]
-    served.remove(session.uid)
+        if TAKEN[reader] != session.uid:
+            newtaken[reader] = TAKEN[reader]
+    TAKEN = newtaken
+    if session.uid in served:
+        served.remove(session.uid)
+        return True
+    else:
+        return False
             
 
 def _filterreaders(uid, readers):
+    global LIST
+    global initialized
     cfg = application.config
-    initialized.append(True)
-    for reader in LIST:
-        del LIST[reader]
+    initialized = True
+    LIST = []
     for reader in readers:
         LIST.append(reader)
     limit = cfg.getinteger('clusterscard.limit', 1)
@@ -59,7 +67,10 @@ def _filterreaders(uid, readers):
         for reader in readers:
             if reader not in TAKEN:
                 free.append(reader)
-        contextreaders = random.sample(free, limit)
+        if len(free) == 0:
+            contestreaders = []
+        else:
+            contextreaders = random.sample(free, limit)
         for reader in contextreaders:
             TAKEN[reader] = uid
         served.append(uid)

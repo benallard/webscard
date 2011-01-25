@@ -12,7 +12,10 @@ THRESHOLD = 20
 def run(current):
     for impl in POOL:
         if impl['hard']:
-            releaseoldestexpiredsession(impl['name'], current)
+            candidate = getoldestexpiredsession(impl['name'])
+            while ((candidate is not None) and
+                   not (release(candidate, current))):
+                candidate = getoldestexpiredsession(impl['name'])
 
     if len(MAP) > THRESHOLD:
         cleanexpiredsoftsessions(current)
@@ -24,9 +27,9 @@ def release(session, current):
     # call the release function from the pool
     for i in POOL:
         if i['name'] == impl['name']:
-            i['release'](session)
+            return i['release'](session)
 
-def releaseoldestexpiredsession(name, current):
+def getoldestexpiredsession(name):
     """
     This cleanup the oldest expired session, 
     basically to make space in the MAP
@@ -39,13 +42,12 @@ def releaseoldestexpiredsession(name, current):
             session = Session.query.get(session_uid)
             inactivity = session.inactivity()
             if inactivity > badinactivity:
-                bad = session_uid
+                bad = session
                 badinactivity = inactivity
+            else:
+                print "inactivity too short: %s" % inactivity
     MAPMUTEX.release()
-    if bad is not None:
-        release(bad, current)
-        return True
-    return False
+    return bad
 
 def cleanexpiredsoftsessions(current):
     """

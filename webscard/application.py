@@ -19,7 +19,9 @@ class WebSCard(object):
         local.application = self
         self.config = config
         db_uri = self.config.getstring('db.uri', "sqlite:///webscard.db")
-        self.database_engine = create_engine(db_uri, convert_unicode=True)
+        self.database_engine = create_engine(
+            db_uri, convert_unicode=True, 
+            echo = config.getbool('logger.db', False))
         dbsession.configure(bind=self.database_engine)
         self.secret_key = config.getcookiesecret()
         chooser.initialize()

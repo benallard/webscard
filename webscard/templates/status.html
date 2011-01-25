@@ -1,0 +1,15 @@
+{%extends "operation.html" %}
+{%block title %}Status{% endblock %}
+{%block code %}
+<div class="code">
+  <pre>
+SCardStatus()
+  </pre>
+</div>
+{% endblock %}
+{% block output %}
+{{ szReaderName }}, {{ dwState }}, {{ dwProtocol }}, {{ATR}}
+{% endblock %}
+{% block suggestions %}
+<li><a href="#">Begin a Transaction -- BROKEN</a></li>
+{% endblock %}

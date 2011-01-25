@@ -38,14 +38,20 @@ class Config(SafeConfigParser):
         self.set('clusterscard', 'free', 'isfree')
         self.set('clusterscard', 'acquire', 'acquire')
         self.set('clusterscard', 'release', 'release')
-        
+
         try:
             self.add_section('pycsc')
         except DuplicateSectionError:
             pass
         self.set('pycsc', 'module', 'webscard.implementations.pycsc')
         self.set('pycsc', 'classname', 'PyCSC')
-        
+
+        try:
+            self.add_section('empty')
+        except DuplicateSectionError:
+            pass
+        self.set('empty', 'module', 'webscard.implementations.empty')
+        self.set('empty', 'classname', 'Empty')
 
     def getstring(self, item, default=""):
         section, option = item.split('.')

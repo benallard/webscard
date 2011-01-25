@@ -29,7 +29,7 @@ def isabrowser(request):
     except KeyError:
         return False
 
-def render(request, dct):
+def render(request, **dct):
     mimetype = 'text/plain'
     if isabrowser(request):
         renderer = JinjaRenderer(request)
