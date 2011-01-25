@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String
+from sqlalchemy import Table, Column, Integer, Text
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapper, relation
 
@@ -8,7 +8,7 @@ from webscard.models.handle import Context, Handle
 
 reader_table = Table('readers', metadata,
     Column('uid', Integer, primary_key=True),
-    Column('name', String, nullable=False),
+    Column('name', Text, nullable=False),
 )
 
 class Reader(object):
