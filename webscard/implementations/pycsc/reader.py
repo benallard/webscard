@@ -8,7 +8,7 @@ def flag_set(flag, flags):
     return flag == flag & flags
 
 class Reader(object):
-    name = "PyC/SC Reader 0"
+    name = "PyCSC Reader 0"
     def __init__(self, name, config):
         self.token = Token(name, config)
         self.protocol = config.getinteger('%s.protocol' % name, 2)
