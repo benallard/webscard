@@ -69,7 +69,7 @@ class Request(BaseRequest, CommonRequestDescriptorsMixin, AcceptMixin):
         else:
             res = None
         if res is not None:
-            return render(self, res)
+            return render(self, **res)
         return None
 
     @cached_property
