@@ -1,11 +1,12 @@
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import mapper, relation
+from sqlalchemy.databases import mysql
 from webscard.utils import dbsession, metadata
 
 handle_table = Table('handles', metadata,
     Column('uid', Integer, primary_key=True),
     Column('context_uid', Integer, ForeignKey('contexts.uid')),
-    Column('value', Integer, nullable=False),
+    Column('value', mysql.MSInteger(unsigned=True), nullable=False),
     Column('reader_uid', Integer, ForeignKey('readers.uid'))
 )
 
@@ -28,7 +29,7 @@ mapper(Handle, handle_table)
 
 context_table = Table('contexts', metadata,
     Column('uid', Integer, primary_key=True),
-    Column('value', Integer, nullable=False),
+    Column('value', mysql.MSInteger(unsigned=True), nullable=False),
     Column('session_uid', Integer, ForeignKey('sessions.uid')),
 )
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey
+from sqlalchemy import Table, Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import mapper
 
 from webscard.utils import dbsession, metadata, stringify
@@ -12,8 +12,8 @@ apdu_table = Table('apdus', metadata,
     Column("P2", Integer),
     Column("Le", Integer),
     Column("Lc", Integer),
-    Column("data_command", String),
-    Column("data_response", String),
+    Column("data_command", Text),
+    Column("data_response", Text),
     Column("SW1", Integer),
     Column("SW2", Integer),
 )

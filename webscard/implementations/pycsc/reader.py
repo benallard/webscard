@@ -8,7 +8,7 @@ def flag_set(flag, flags):
     return flag == flag & flags
 
 class Reader(object):
-    name = "PyC/SC Reader 0"
+    name = "PyCSC Reader 0"
     def __init__(self, name, config):
         self.token = Token(name, config)
         self.protocol = config.getinteger('%s.protocol' % name, 2)
@@ -79,6 +79,12 @@ class Reader(object):
         if card not in self.cards:
             return scard.SCARD_E_INVALID_HANDLE, []
         return self.token.transmit(apdubytes)
+
+    def Status(self, card):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE, self.name, 0, 0, []
+        # 0x10 is SCARD_POWERED
+        return scard.SCARD_S_SUCCESS, self.name, 0x10, self.cards[card], self.token.ATR
 
 class CardRLock(object):
     """ A kind of RLock, but based on hCard instead of thread """

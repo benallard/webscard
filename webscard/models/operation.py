@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, Float, DateTime, String
+from sqlalchemy import Table, Column, Integer, Float, DateTime, String, Text
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import mapper, relation, backref
 
@@ -13,7 +13,7 @@ from webscard.models.transaction import Transaction
 operation_table = Table('operations', metadata,
     Column('uid', Integer, primary_key=True),
     Column('context_uid', Integer, ForeignKey('contexts.uid')),
-    Column('name', String),
+    Column('name', String(20)),
     Column('duration', Float),
     Column('initiated', DateTime),
     Column('result', Integer),
@@ -61,8 +61,8 @@ mapper(Transmit, transmit_table, inherits=Operation, polymorphic_identity='trans
 control_table = Table('controls', metadata,
     Column('operation_uid', Integer, ForeignKey('operations.uid'), primary_key=True),
     Column('controlcode', Integer),
-    Column('inbuffer', String),
-    Column('outbuffer', String),
+    Column('inbuffer', Text),
+    Column('outbuffer', Text),
 )
 
 class Control(Operation):
