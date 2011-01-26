@@ -29,6 +29,13 @@ class WebSCard(object):
         self.dispatch = SharedDataMiddleware(self.dispatch, {
             '/static': get_static_dir(),
         })
+        if config.getbool('logger.profile', False):
+            from repoze.profile.profiler import AccumulatingProfileMiddleware
+            self.dispatch = AccumulatingProfileMiddleware(
+                self.dispatch,
+                log_filename='webscard.profile.log',
+                cachegrind_filename='cachegrind.out.webscard'
+                )
 
     def dispatch(self, environ, start_response):
         local.application = self
