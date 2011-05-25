@@ -10,7 +10,7 @@ def flag_set(flag, flags):
 class Reader(object):
     name = "PyCSC Reader 0"
     def __init__(self, name, config):
-        self.token = Token(name, config)
+        self.token = Token.get(name, config)
         self.protocol = config.getinteger('%s.protocol' % name, 2)
         self.cards = {}
         self.lockedby = 0
