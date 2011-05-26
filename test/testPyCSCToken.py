@@ -7,11 +7,10 @@ from webscard.implementations.pycsc.token import Token
 from pythoncard.framework import ISO7816, ISOException
 
 
-class testPyCSCToken(unittest.TestCase):
+class testPyCSCPyToken(unittest.TestCase):
 
     def _testConfig(self):
         cfg = Config()
-        cfg.add_section('pycsc')
         cfg.set('pycsc', 'ATR', "3B 00")
         cfg.set('pycsc', 'applets', 'testapplet')
         appletfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "testapplet.py")
@@ -19,7 +18,7 @@ class testPyCSCToken(unittest.TestCase):
         return cfg
 
     def testLoader(self):
-        tkn = Token('pycsc', self._testConfig())
+        tkn = Token.get('pycsc', self._testConfig())
 
         #Finally, check that our applet is registered !
         self.assertEquals(1, len(tkn.applets))
@@ -27,7 +26,7 @@ class testPyCSCToken(unittest.TestCase):
         self.assert_(aid.equals([0xa0, 0,0,0,0], 0, 5))
 
     def testSelect(self):
-        tkn = Token('pycsc', self._testConfig())
+        tkn = Token.get('pycsc', self._testConfig())
 
         self.assertEquals(None, tkn.selected)
 
@@ -48,7 +47,7 @@ class testPyCSCToken(unittest.TestCase):
         self.assertEquals(tkn.applets[tkn.applets.keys()[0]], tkn.selected)
 
     def testSelectViaTransmit(self):
-        tkn = Token('pycsc', self._testConfig())
+        tkn = Token.get('pycsc', self._testConfig())
         self.assertEquals(None, tkn.selected)
 
         hresult, response = tkn.transmit([0,0xA4,0,0,5, 0xa0, 0,0,0,0])
@@ -61,3 +60,16 @@ class testPyCSCToken(unittest.TestCase):
         self.assertEquals([0x6A, 0x82], response) # No such File
 
         self.assertEquals(tkn.applets[tkn.applets.keys()[0]], tkn.selected)
+
+class testPyCSCCAPToken(unittest.TestCase):
+
+     def _testConfig(self):
+        cfg = Config()
+        cfg.set('pycsc', 'ATR', "3B 00")
+        appletfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "javatest.cap")
+        cfg.set('pycsc', 'capfile', appletfile)
+        return cfg
+
+     def testLoad(self):
+         tkn = Token.get('pycsc', self._testConfig())
+

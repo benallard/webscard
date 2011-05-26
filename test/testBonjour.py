@@ -1,6 +1,6 @@
 import unittest, time
 
-from webscard.bonjour import Zeroconf
+from webscard.bonjour.zc import Zeroconf
 
 from webscard.bonjour import pybj, zc
 

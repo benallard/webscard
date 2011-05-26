@@ -10,7 +10,6 @@ class testPyCSC(unittest.TestCase):
 
     def setUp(self):
         cfg = config.Config()
-        cfg.add_section('pycsc')
         cfg.set('pycsc', 'ATR', '3B 00 00')
         self.pycsc = pycsc.PyCSC("pycsc", cfg)
 
