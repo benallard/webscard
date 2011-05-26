@@ -5,6 +5,15 @@ This is a Python token, it reprsents a Token + the CardManager
 
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
+try:
+    from caprunner import resolver, capfile
+    from caprunner.utils import d2a, a2d
+    from caprunner.interpreter import JavaCardVM, ExecutionDone
+    from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
+    CAPRunner = True
+except ImportError:
+    CAPRunner = False
+
 from webscard.utils import loadpath
 
 def swtotransmitres(sw):
@@ -33,7 +42,11 @@ class Token(object):
         if capfilename is None:
             return PyToken(implname, config)
         else:
-            return CAPToken(implname, config)
+            if CAPRunner:
+                return CAPToken(implname, config)
+            else:
+                # There should be a better way to ... 
+                return None
 
 class PyToken(Token):
     """ 
@@ -129,12 +142,6 @@ class PyToken(Token):
         return 0, buf
 
 class CAPToken(Token):
-
-    from caprunner import resolver, capfile
-    from caprunner.utils import s2a, a2s, d2a, a2d, signed1
-    from caprunner.interpreter import JavaCardVM, ExecutionDone
-    from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
-
     """
     This token is a Java Token. 
     The Applet is actually a capfile. The code below is taken from runcap.py
@@ -154,13 +161,14 @@ class CAPToken(Token):
 
         self.installJCFunctions()
 
-        self.capfilename = config.getstring("%s.CAPFile" % implname)
+        self.capfilename = config.getstring("%s.capfile" % implname)
         # Create the VM
         self.vm = JavaCardVM(resolver.linkResolver())
         # Load the CAP File
         self.vm.load(capfile.CAPFile(self.capfilename))        
 
     def installJCFunctions(self):
+        """ This tweak the JC Framework to make it fit our environment """
 
         def defineMyregister(self):
             """
@@ -174,14 +182,14 @@ class CAPToken(Token):
                     aid = self.current_install_aid
                 self.applets[a2d(aid.aid)] = applet
             return myregister
-        Applet.register = defineMyregister(self, self.applets)
+        Applet.register = defineMyregister(self)
 
         def defineMylookupAID(applets):
             def mylookupAID(buffer, offset, length):
                 if a2d(buffer[offset:offset + length]) in applets:
                     return AID(buffer, offset, length)
                 return None
-            return mulookupAID
+            return mylookupAID
         JCSystem.lookupAID = defineMylookupAID(self.applets)
 
         def defineMyisAppletActive(selected):
@@ -211,10 +219,10 @@ class CAPToken(Token):
             # ISO command
             if bytes[1:4] == [-92, 4, 0]:
                 aid = bytes[5:5 + bytes[4]]
-                # select command
+                # select command A4 04 00
                 self._cmselect(aid)
             elif bytes[1:4] == [112, 0, 0]:
-                # open channel
+                # open channel : 70 00 00
                 for idx in xrange(4):
                     if not self.channels[idx]:
                         self.channels[idx] = True
@@ -223,17 +231,22 @@ class CAPToken(Token):
                         return 0, buf
                 return 0, swtotransmitres(ISO7816.SW_WRONG_P1P2)
             elif bytes[1:3] == [112, -128]:
-                # close channel
+                # close channel: 70 80
                 if self.channels[self.current_channel]:
                     self.channels[self.current_channel] = False
                     buf = d2a('\x90\x00')
                     return 0, buf
                 return swtotransmitres(ISO7816.SW_WRONG_P1P2)
+            elif bytes[1:4] == [-26, 12, 0]:
+                # install : E6 0C 00
+                self.install(bytes, 5)
 
         # Make an APDU object
         apdu = APDU(bytes)
         # pass to the process method
         applet = self.selected[self.current_channel]
+        if applet is None:
+            return swtotransmitres(ISO7816.SW_FILE_NOT_FOUND)
         self.vm.frame.push(applet)
         self.vm.frame.push(apdu)
         # invoke the process method
@@ -308,13 +321,19 @@ class CAPToken(Token):
 
 
     def install(self, data, offset):
-        """ Not called yet """
+        """ 
+        data[offset:] is len||appletaid||len||installdata
+        where installdata is the data given to the install method
+        """
         aidlen = data[offset]
         offset += 1
         aid = data[offset: offset + aidlen]
         offset += aidlen
         length = data[offset]
         offset += 1
+        # data[offset:offset+length] is what is given to the install JavaCard 
+        # method which means: len-instanceaid-len-stuff-len-customparams
+        # where instance AID might be empty
         self.vm.frame.push(data)
         self.vm.frame.push(offset)
         self.vm.frame.push(length)
@@ -334,8 +353,8 @@ class CAPToken(Token):
             while True:
                 vm.step()
         except ISOException, ie:
-            sw = ie.getReason()
-            print "instanciating throwed : %02X %02X" % ((sw & 0xff00) >> 8, sw & 0x00ff)
+            return swtotransmitres(ie.getReason())
         except ExecutionDone:
             pass
         self.current_install_aid = None
+        return swtotransmitres(ISO7816.SW_NO_ERROR)
