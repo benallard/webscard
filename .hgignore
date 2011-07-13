@@ -10,3 +10,4 @@ glob:webscard.cfg
 glob:build/*
 glob:cherrypy/*
 glob:dist/*
+glob:docs/_build/*
