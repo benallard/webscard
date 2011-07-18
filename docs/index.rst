@@ -13,6 +13,7 @@ Contents:
    :numbered:
    
    introduction
+   installation
 
 * :ref:`search`
 
