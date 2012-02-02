@@ -9,11 +9,12 @@ from webscard.implementations import gc
 
 def createimpl(name):
     cfg = application.config
-    if not cfg.has_section(name):
+    if not name in cfg:
         raise ValueError("section [%s] in the config file is missing" % name)
+    cfg = cfg[name]
     mod = getmodulefor(name)
-    classname = cfg.getstring('%s.classname' % name, None)
-    hard = cfg.getbool('%s.hard' % name, False)
+    classname = cfg.get('classname')
+    hard = cfg.get('hard', False)
     if classname is None:
         impl = mod
     else:
@@ -35,8 +36,8 @@ def createimpl(name):
 
     if hard:
         try:
-            free = cfg.get(name, 'free')
-        except ConfigParser.NoOptionError:
+            free = cfg['free']
+        except KeyError:
             free = True
         if isinstance(free, bool):
             free = lambda: free
@@ -46,7 +47,7 @@ def createimpl(name):
             raise ValueError(free)
         res['free'] = free
 
-        acquirename = cfg.getstring('%s.acquire' % name, None)
+        acquirename = cfg.get('acquire')
         if acquirename is not None:
             acquirefunc = getattr(impl, acquirename)
         else:
@@ -61,7 +62,7 @@ def createimpl(name):
                         releasecontext(c.val)
             return releaseremainingcontexts
 
-        releasename = cfg.getstring('%s.release' % name, None)
+        releasename = cfg.get('release')
         if releasename is not None:
             releasefunc = getattr(impl, releasename)
         else:
@@ -71,13 +72,13 @@ def createimpl(name):
     return res
 
 def getmodulefor(name):
-    cfg = application.config
-    path = cfg.getstring('%s.path' % name, None)
+    cfg = application.config[name]
+    path = cfg.get('path')
     if path is not None:
         # generate a unique one to avoid clash
         mod = loadpath(path, "webscard.%s" % name)
     else:
-        module = cfg.getstring('%s.module' % name, None)
+        module = cfg.get('module')
         if module is None:
             raise ValueError(
                 '%s.module or %s.path config option missing'

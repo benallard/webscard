@@ -18,10 +18,10 @@ class WebSCard(object):
     def __init__(self, config):
         local.application = self
         self.config = config
-        db_uri = self.config.getstring('db.uri', "sqlite:///webscard.db")
+        db_uri = self.config['db'].get('uri', "sqlite:///webscard.db")
         self.database_engine = create_engine(
             db_uri, convert_unicode=True, 
-            echo = config.getbool('logger.db', False))
+            echo = config['logger'].get('db', False))
         dbsession.configure(bind=self.database_engine)
         self.secret_key = config.getcookiesecret()
         chooser.initialize()
@@ -29,7 +29,7 @@ class WebSCard(object):
         self.dispatch = SharedDataMiddleware(self.dispatch, {
             '/static': get_static_dir(),
         })
-        if config.getbool('logger.profile', False):
+        if config['logger'].get('profile', False):
             from repoze.profile.profiler import AccumulatingProfileMiddleware
             self.dispatch = AccumulatingProfileMiddleware(
                 self.dispatch,
@@ -59,7 +59,7 @@ class WebSCard(object):
         request.values = values
         handler = getattr(views, endpoint)
         response = None
-        if self.config.getbool('internal.sessioncheck', True):
+        if self.config['internal'].get('sessioncheck', True):
             response = request.validatesession(**values)
         if response is None:
             response = handler(request, **values)

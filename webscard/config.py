@@ -1,91 +1,53 @@
-from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
-from ConfigParser import DuplicateSectionError
-
+import yaml
 import random
 
 LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-class Config(SafeConfigParser):
-    def __init__(self, file=[]):
-        SafeConfigParser.__init__(self)
-        self.read(file)
+class Config(dict):
+    def __init__(self, file=''):
+        self.defaultvalues()
+        f = open(file, 'r')
+        self.update(yaml.load(f.read()))
+        f.close()
         self.addhardcodedvalues()
         self.port = None
         self.defaultsecret = "".join([random.choice(LETTERS)
                                       for i in range(20)])
 
+    def defaultvalues(self):
+        self.update({
+            'cookies': {},
+            'web': {},
+            'logger': {},
+            'internal': {}
+        })
+
     def addhardcodedvalues(self):
         """ Those are constant values, not default ones """
-        try:
-            self.add_section('web')
-        except DuplicateSectionError:
-            pass
-
-        try:
-            self.add_section('pyscard')
-        except DuplicateSectionError:
-            pass
-        self.set('pyscard', 'module', 'smartcard.scard')
-        self.set('pyscard', 'hard', "yes")
-
-        try:
-            self.add_section('clusterscard')
-        except DuplicateSectionError:
-            pass
-        self.set('clusterscard', 'module',
-                 'webscard.implementations.clusterscard')
-        self.set('clusterscard', 'hard', "yes")
-        self.set('clusterscard', 'free', 'isfree')
-        self.set('clusterscard', 'acquire', 'acquire')
-        self.set('clusterscard', 'release', 'release')
-
-        try:
-            self.add_section('pycsc')
-        except DuplicateSectionError:
-            pass
-        self.set('pycsc', 'module', 'webscard.implementations.pycsc')
-        self.set('pycsc', 'classname', 'PyCSC')
-
-        try:
-            self.add_section('empty')
-        except DuplicateSectionError:
-            pass
-        self.set('empty', 'module', 'webscard.implementations.empty')
-        self.set('empty', 'classname', 'Empty')
-
-    def getstring(self, item, default=""):
-        section, option = item.split('.')
-        try:
-            val = self.get(section, option, 1)
-        except (NoSectionError, NoOptionError):
-            val = default
-        return val
-
-    def getbool(self, item, default=False):
-        section, option = item.split('.')
-        try:
-            val = self.getboolean(section, option)
-        except (NoSectionError, NoOptionError):
-            val = default
-        return val
-
-    def getinteger(self, item, default=0):
-        section, option = item.split('.')
-        try:
-            val = self.getint(section, option)
-        except (NoSectionError, NoOptionError):
-            val = default
-        return val
+        self.update({
+            'pyscard': {'module': 'smartcard.scard', 'hard': True},
+            'clusterscard': {
+                'module': 'webscard.implementations.clusterscard',
+                'hard': True,
+                'free': 'isfree',
+                'acquire': 'acquire',
+                'release': 'release',},
+            'pycsc': {
+                'module': 'webscard.implementations.pycsc',
+                'classname': 'PyCSC',},
+            'empty': {
+                'module': 'webscard.implementations.empty',
+                'classname': 'Empty',},
+        })
 
     # And finally, functions that really make sense in our context
     def getimplementations(self):
         """ Return a list of the implementations in the current server """
-        impls = self.getstring('internal.implementations', 'pyscard')
-        return impls.split()
+        return self['internal'].get('implementations', ['pyscard'])
 
     def gethost(self):
         """ The interface where the server is published """
-        return self.getstring('web.host', '0.0.0.0')
+        return self['web'].get('host', '0.0.0.0')
 
     def getport(self):
         """
@@ -94,14 +56,13 @@ class Config(SafeConfigParser):
         """
         if self.port is not None:
             return self.port
-        if self.getbool('web.randomport', False):
+        if self['web'].get('randomport', False):
             # Let's pray the port will indeed be free ...
             self.port = random.randint(49152, 65535)
         else:
-            self.port = self.getinteger('web.port', 3333)
+            self.port = self['web'].get('port', 3333)
         return self.port
 
     def getcookiesecret(self):
         """ Secret key that secure the sessions inside the cookies """
-        return self.getstring('cookies.secret',
-                              self.defaultsecret)
+        return self['cookies'].get('secret', self.defaultsecret)

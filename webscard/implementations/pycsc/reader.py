@@ -10,8 +10,8 @@ def flag_set(flag, flags):
 class Reader(object):
     name = "PyCSC Reader 0"
     def __init__(self, name, config):
-        self.token = Token.get(name, config)
-        self.protocol = config.getinteger('%s.protocol' % name, 2)
+        self.token = Token.get(name, config[name])
+        self.protocol = config[name].get('protocol', 2)
         self.cards = {}
         self.lockedby = 0
         # reentrant to authorize nested transactions

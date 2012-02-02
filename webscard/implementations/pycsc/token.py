@@ -24,8 +24,8 @@ def swtotransmitres(sw):
 class Token(object):
     """ This is a generic Token """
 
-    def __init__(self, implname, config):
-        ATR = config.getstring("%s.ATR" % implname, "3B 00")
+    def __init__(self, name, config):
+        ATR = config.get('ATR', "3B 00")
         ATR = ATR.split()
         self.ATR = map(lambda x: int(x, 16), ATR)
 
@@ -36,14 +36,14 @@ class Token(object):
         pass
 
     @staticmethod
-    def get(implname, config):
+    def get(name, config):
         """ This returns or a PyToken or a CAPToken """
-        capfilename = config.getstring("%s.CAPFile" % implname, None)
+        capfilename = config.get('CAPFile')
         if capfilename is None:
-            return PyToken(implname, config)
+            return PyToken(name, config)
         else:
             if CAPRunner:
-                return CAPToken(implname, config)
+                return CAPToken(name, config)
             else:
                 # There should be a better way to ... 
                 return None
@@ -71,10 +71,9 @@ class PyToken(Token):
         Applet.register = defineMyregister(self.applets)
 
         # First, we load all the applet modules
-        applets = config.getstring('%s.applets' % name)
-        applets = applets.split()
+        applets = config.get('applets', [])
         for applet in applets:
-            modulepath = config.getstring("%s.%s"  % (name,applet), None)
+            modulepath = config.get(applet)
             loadpath(modulepath, "%s.%s" % (name, applet))
             # Then we instanciate all the applets in the module we just loaded
             for applet in Applet.__subclasses__():
@@ -146,8 +145,8 @@ class CAPToken(Token):
     This token is a Java Token. 
     The Applet is actually a capfile. The code below is taken from runcap.py
     """
-    def __init__(self, implname, config):
-        Token.__init__(self, implname, config)
+    def __init__(self, name, config):
+        Token.__init__(self, name, config)
 
         self.current_install_aid = None
         # a2d(aid) => Applet
@@ -161,7 +160,7 @@ class CAPToken(Token):
 
         self.installJCFunctions()
 
-        self.capfilename = config.getstring("%s.capfile" % implname)
+        self.capfilename = config.get("capfile")
         # Create the VM
         self.vm = JavaCardVM(resolver.linkResolver())
         # Load the CAP File
