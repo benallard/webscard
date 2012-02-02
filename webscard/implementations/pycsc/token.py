@@ -14,6 +14,12 @@ try:
 except ImportError:
     CAPRunner = False
 
+try:
+    from virtualsmartcard import VirtualSmartcard
+    vsmartcard = True
+except ImportError:
+    vsmartcard = False
+
 from webscard.utils import loadpath
 
 def swtotransmitres(sw):
@@ -38,15 +44,21 @@ class Token(object):
     @staticmethod
     def get(name, config):
         """ This returns or a PyToken or a CAPToken """
-        capfilename = config.get('CAPFile')
-        if capfilename is None:
-            return PyToken(name, config)
-        else:
-            if CAPRunner:
-                return CAPToken(name, config)
-            else:
+        if 'CAPFile' in config:
+            if not CAPRunner:
                 # There should be a better way to ... 
                 return None
+            return CAPToken(name, config)
+        elif 'applets' in config:
+            return PyToken(name, config)
+        elif 'vsmartcard' in config:
+            if not vsmartcard:
+                # idem
+                print "no vsmartcard"
+                return None
+            return VToken(name, config)
+        else:
+            print "None of CAPFile, applets, or vsmartcard"
 
 class PyToken(Token):
     """ 
@@ -357,3 +369,24 @@ class CAPToken(Token):
             pass
         self.current_install_aid = None
         return swtotransmitres(ISO7816.SW_NO_ERROR)
+
+class VToken(Token):
+    def __init__(self, name, config):
+        if config['vsmartcard'] not in ('NPAOS', 'RelayOS',
+                                        'CryptoflexOS', 'Iso7816OS'):
+            return
+
+        cls = getattr(VirtualSmartcard, config['vsmartcard'])
+        self.vSC = cls(**config['initparams'])
+        self.ATR = self.vSC.atr
+
+    def power(self):
+        self.vSC.powerUp()
+
+    def unpower(self):
+        self.vSC.powerDown()
+
+    def transmit(self, bytes):
+        msg = "".join([chr(b) for b in bytes])
+        rapdu = self.vSC.execute(msg)
+        return 0, list(bytes(rapdu))
