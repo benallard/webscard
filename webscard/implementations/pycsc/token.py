@@ -377,7 +377,19 @@ class VToken(Token):
             return
 
         cls = getattr(VirtualSmartcard, config['vsmartcard'])
-        self.vSC = cls(**config['initparams'])
+		
+        if config['vsmartcard'] == 'RelayOS':
+            self.vSC = cls(None)
+            self.ATR = self.vSC.atr
+            return
+
+        self.cardGenerator = CardGenerator({
+            'Iso7816OS': 'iso7816', 'ePassOS': 'ePass',
+            'CryptoflexOS': 'cryptoflex', 'NPAOS': 'nPA', })
+
+        MF, SAM = self.cardGenerator.getCard()
+
+        self.vSC = cls(MF, SAM)
         self.ATR = self.vSC.atr
 
     def power(self):
