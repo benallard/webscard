@@ -39,8 +39,15 @@ class Config(RecursiveDictionary):
     def __init__(self, file=''):
         self.defaultvalues()
         f = open(file, 'r')
-        self.rec_update(yaml.load(f.read()))
+        data = f.read()
         f.close()
+        try:
+            config = yaml.load(data)
+        except yaml.parser.ParserError, e:
+            config = {}
+            print "Error parsing configuration file %s" % file
+            print e
+        self.rec_update(config)
         self.addhardcodedvalues()
         self.port = None
         self.defaultsecret = "".join([random.choice(LETTERS)
