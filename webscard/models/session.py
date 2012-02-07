@@ -56,16 +56,20 @@ class Session(object):
         if handle is None:
             return {'message': "Handle %d never seen" % handle_uid,
                     'hresult': SCARD_E_INVALID_HANDLE}
-        res = False
         for context in self.contexts:
             if handle in context.handles:
-                res = True
-        if not res:
-            return {'message': "Current handle #%d does not belong to any " \
+                return None
+        return {'message': "Current handle #%d does not belong to any " \
                         "context opened in this session #%d" % (handle.uid,
                                                                 self.uid),
                     'hresult': SCARD_E_INVALID_HANDLE}
-        return None
+
+    def getcontext(self, handle_uid):
+        """ Validation should already have occured, so, no extra check """
+        handle = Handle.query.get(handle_uid)
+        for context in self.contexts:
+            if handle in context.handles:
+                return context.uid
 
     def __repr__(self):
         return "<session #%d, %d contexts, inactive for %s>" % (
