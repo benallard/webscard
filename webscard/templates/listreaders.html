@@ -3,7 +3,11 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardListReaders()
+SCardListReaders(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock code %}
@@ -17,6 +21,6 @@ The readers are
 {% endblock output %}
 {% block suggestions %}
 {% for reader in mszReaders %}
-<li><a href="{{ url_for('connect', context=request.values['context'], szReader=reader) }}">Connect to {{ reader }}</a></li>
+<li><a href="{{ url_for('connect', context=request.context, szReader=reader) }}">Connect to {{ reader }}</a></li>
 {% endfor %}
 {% endblock %}

@@ -3,10 +3,14 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardDisconnect()
+SCardDisconnect(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock %}
 {% block suggestions %}
-<li><a href="#{# {{ url_for('listreaders', context=request.values['context']) }} #}">List the readers present - NOT WORKING</a></li>
+<li><a href="{{ url_for('listreaders', context=request.context) }}">List the readers present</a></li>
 {% endblock %}

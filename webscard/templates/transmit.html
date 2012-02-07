@@ -3,7 +3,11 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardTransmit()
+SCardTransmit(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock %}
@@ -11,5 +15,5 @@ SCardTransmit()
 {{ response }}
 {% endblock %}
 {% block suggestions %}
-<li><a href="{{ url_for('endtransaction', card=request.values['card']) }}">End the transaction</a></li>
+<li><a href="{{ url_for('endtransaction', card=request.card) }}">End the transaction</a></li>
 {% endblock %}

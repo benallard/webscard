@@ -3,11 +3,15 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardBeginTransaction()
+SCardBeginTransaction(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock %}
 {% block suggestions %}
-<li><a href="{{ url_for('transmit', card=request.values['card'], apdu='[0, 164, 0, 12, 2, 63, 0]') }}">Select the MF</a></li>
-<li><a href="{{ url_for('endtransaction', card=request.values['card']) }}">End the transaction</a></li>
+<li><a href="{{ url_for('transmit', card=request.card, apdu='[0, 164, 0, 12, 2, 63, 0]') }}">Select the MF</a></li>
+<li><a href="{{ url_for('endtransaction', card=request.card) }}">End the transaction</a></li>
 {% endblock %}

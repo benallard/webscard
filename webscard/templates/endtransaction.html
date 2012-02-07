@@ -3,10 +3,14 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardEndTransaction()
+SCardEndTransaction(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock %}
 {% block suggestions %}
-<li><a href="{{ url_for('begintransaction', card=request.values['card']) }}">Begin a new transaction</a></li>
+<li><a href="{{ url_for('begintransaction', card=request.card) }}">Begin a new transaction</a></li>
 {% endblock %}

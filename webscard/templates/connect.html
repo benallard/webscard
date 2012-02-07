@@ -3,7 +3,11 @@
 {%block code %}
 <div class="code">
   <pre>
-SCardConnect()
+SCardConnect(
+{%- for value in request.values %}
+    {{ value }} = {{ request.values[value] }},
+{%- endfor %}
+)
   </pre>
 </div>
 {% endblock %}
