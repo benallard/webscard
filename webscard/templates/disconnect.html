@@ -8,5 +8,5 @@ SCardDisconnect()
 </div>
 {% endblock %}
 {% block suggestions %}
-<li><a href="#">List the readers present - NOT WORKING</a></li>
+<li><a href="#{# {{ url_for('listreaders', context=request.values['context']) }} #}">List the readers present - NOT WORKING</a></li>
 {% endblock %}

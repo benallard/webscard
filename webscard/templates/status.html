@@ -11,5 +11,5 @@ SCardStatus()
 {{ szReaderName }}, {{ dwState }}, {{ dwProtocol }}, {{ATR}}
 {% endblock %}
 {% block suggestions %}
-<li><a href="#">Begin a Transaction -- BROKEN</a></li>
+<li><a href="{{ url_for('begintransaction', card=request.values['card']) }}">Begin a Transaction</a></li>
 {% endblock %}
