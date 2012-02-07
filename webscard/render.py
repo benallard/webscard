@@ -31,7 +31,8 @@ def isabrowser(request):
 
 def render(request, **dct):
     mimetype = 'text/plain'
-    if isabrowser(request):
+    jsonforced = 'json' in request.args
+    if not jsonforced and isabrowser(request):
         renderer = JinjaRenderer(request)
         mimetype = 'text/html'
     else:
