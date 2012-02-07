@@ -16,6 +16,7 @@ except ImportError:
 
 try:
     from virtualsmartcard import VirtualSmartcard
+    from virtualsmartcard.CardGenerator import CardGenerator
     vsmartcard = True
 except ImportError:
     vsmartcard = False
@@ -385,12 +386,12 @@ class VToken(Token):
 
         self.cardGenerator = CardGenerator({
             'Iso7816OS': 'iso7816', 'ePassOS': 'ePass',
-            'CryptoflexOS': 'cryptoflex', 'NPAOS': 'nPA', })
+            'CryptoflexOS': 'cryptoflex', 'NPAOS': 'nPA', }[config['vsmartcard']])
 
         MF, SAM = self.cardGenerator.getCard()
 
         self.vSC = cls(MF, SAM)
-        self.ATR = self.vSC.atr
+        self.ATR = d2a(self.vSC.atr)
 
     def power(self):
         self.vSC.powerUp()
@@ -399,6 +400,4 @@ class VToken(Token):
         self.vSC.powerDown()
 
     def transmit(self, bytes):
-        msg = "".join([chr(b) for b in bytes])
-        rapdu = self.vSC.execute(msg)
-        return 0, list(bytes(rapdu))
+        return 0, d2a(self.vSC.execute(a2d(bytes)))
