@@ -12,6 +12,9 @@ SCardBeginTransaction(
 </div>
 {% endblock %}
 {% block suggestions %}
-<li><a href="{{ url_for('transmit', card=request.card, apdu='[0, 164, 0, 12, 2, 63, 0]') }}">Select the MF</a></li>
+{% for apdu, title in [([0, 164, 0, 12, 2, 63, 0], "Select the MF"),
+                       ([0, 32, 0, 3, 8, 49, 50, 51, 52, 0, 0, 0, 0], "Verify PIN 1234" )] %}
+<li><a href="{{ url_for('transmit', card=request.card, apdu=apdu) }}">{{ title }}</a></li>
+{% endfor %}
 <li><a href="{{ url_for('endtransaction', card=request.card) }}">End the transaction</a></li>
 {% endblock %}
