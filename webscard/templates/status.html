@@ -12,7 +12,7 @@ SCardStatus(
 </div>
 {% endblock %}
 {% block output %}
-{{ szReaderName }}, {{ dwState }}, {{ dwProtocol }}, {{ATR}}
+{{ szReaderName }}, {{ dwState }}, {{ dwProtocol }}, {% for byte in ATR %}{{ byte|i2x }}{% endfor %}
 {% endblock %}
 {% block suggestions %}
 <li><a href="{{ url_for('begintransaction', card=request.card) }}">Begin a Transaction</a></li>

@@ -18,6 +18,11 @@ jinja_environment = Environment(loader=FileSystemLoader(get_template_dir()))
 jinja_environment.globals['url_for'] = url_for
 jinja_environment.globals['SCardError'] = SCardGetErrorMessage
 
+def i2x(int, fmt="%02X"):
+    return fmt % (int & 0xff)
+
+jinja_environment.filters['i2x'] = i2x
+
 def hexadecimal(value, format='0x%08X'):
     return format % value
 

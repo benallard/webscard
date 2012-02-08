@@ -12,7 +12,15 @@ SCardTransmit(
 </div>
 {% endblock %}
 {% block output %}
-{{ response }}
+{% if response|length > 2 %}
+  Data:
+  <table><tr>
+  {% for byte in response[:-2] %}
+    <td>{{ byte|i2x }}</td>
+  {% endfor %}
+  </tr><table>
+{% endif %}
+SW: {{ response[-2]|i2x }}{{ response[-1]|i2x }}
 {% endblock %}
 {% block suggestions %}
 <li><a href="{{ url_for('endtransaction', card=request.card) }}">End the transaction</a></li>

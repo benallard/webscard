@@ -373,20 +373,21 @@ class CAPToken(Token):
 
 class VToken(Token):
     def __init__(self, name, config):
-        if config['vsmartcard'] not in ('NPAOS', 'RelayOS',
+        self.card_type = config['vsmartcard']
+        if self.card_type not in ('NPAOS', 'RelayOS',
                                         'CryptoflexOS', 'Iso7816OS'):
             return
 
-        cls = getattr(VirtualSmartcard, config['vsmartcard'])
+        cls = getattr(VirtualSmartcard, self.card_type)
 		
-        if config['vsmartcard'] == 'RelayOS':
+        if self.card_type == 'RelayOS':
             self.vSC = cls(None)
             self.ATR = self.vSC.atr
             return
 
         self.cardGenerator = CardGenerator({
             'Iso7816OS': 'iso7816', 'ePassOS': 'ePass',
-            'CryptoflexOS': 'cryptoflex', 'NPAOS': 'nPA', }[config['vsmartcard']])
+            'CryptoflexOS': 'cryptoflex', 'NPAOS': 'nPA', }[self.card_type])
 
         MF, SAM = self.cardGenerator.getCard()
 
@@ -401,3 +402,6 @@ class VToken(Token):
 
     def transmit(self, bytes):
         return 0, d2a(self.vSC.execute(a2d(bytes)))
+
+    def __str__(self):
+        return "VToken of type " + self.card_type

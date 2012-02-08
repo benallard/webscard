@@ -6,7 +6,7 @@ This only manage Contexts and make some parameter checking.
 All the rest is delegated to the reader.
 
 """
-import random
+import random, textwrap
 
 from webscard.implementations.pycsc.reader import Reader
 
@@ -83,4 +83,10 @@ class PyCSC(object):
 
     def SCardControl(self, hCard, dwControlCode, inBuffer):
         pass
+
+    def __str__(self):
+        return textwrap.dedent("""\
+        This is a virtual python PC/SC layer
+        It has one reader, it is:
+        """) + str(self.reader)
 
