@@ -177,7 +177,11 @@ class CAPToken(Token):
         # Create the VM
         self.vm = JavaCardVM(resolver.linkResolver())
         # Load the CAP File
-        self.vm.load(capfile.CAPFile(self.capfilename))        
+        self.vm.load(capfile.CAPFile(self.capfilename))
+        
+        if 'install' in config:
+            data = config['install'].split()
+            self.install(map(lambda x: int(x, 16), data), 0)
 
     def installJCFunctions(self):
         """ This tweak the JC Framework to make it fit our environment """
@@ -294,7 +298,7 @@ class CAPToken(Token):
 
         self.vm.frame.push(potential)
         try:
-            selectmtd = JavaCardVirtualMethod(potential._ref.offset, 6, False, vm.cap_file, vm.resolver)
+            selectmtd = JavaCardVirtualMethod(potential._ref.offset, 6, False, self.vm.cap_file, self.vm.resolver)
         except NoSuchMethod:
             selected[channel] = potential
             selected[channel]._selectingApplet = True
@@ -302,7 +306,7 @@ class CAPToken(Token):
         self.vm._invokevirtualjava(selectmtd)
         try:
             while True:
-                vm.step()
+                self.vm.step()
         except ExecutionDone:
             pass
         if self.vm.frame.getValue() == True:
@@ -316,17 +320,17 @@ class CAPToken(Token):
         applet = self.selected[channel]
         self.vm.frame.push(applet)
         try:
-            deselectmtf = JavaCardVirtualMethod(applet._ref.offset, 4, False, vm.cap_file, vm.resolver)
+            deselectmtf = JavaCardVirtualMethod(applet._ref.offset, 4, False, self.vm.cap_file, self.vm.resolver)
         except NoSuchMethod:
             self.selected[channel] = None
             return True
         self.vm._invokevirtualjava(deselectmtd)
         try:
             while True:
-                vm.step()
+                self.vm.step()
         except ExecutionDone:
             pass
-        if vm.frame.getValue():
+        if self.vm.frame.getValue():
             self.selected[channel] = None
             return True
         return False
@@ -359,11 +363,11 @@ class CAPToken(Token):
         self.current_install_aid = aid
         self.vm._invokestaticjava(JavaCardStaticMethod(
                 applet.install_method_offset,
-                vm.cap_file,
-                vm.resolver))
+                self.vm.cap_file,
+                self.vm.resolver))
         try:
             while True:
-                vm.step()
+                self.vm.step()
         except ISOException, ie:
             return swtotransmitres(ie.getReason())
         except ExecutionDone:
