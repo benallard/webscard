@@ -87,14 +87,18 @@ class Reader(object):
         return scard.SCARD_S_SUCCESS, self.name, 0x10, self.cards[card], self.token.ATR
         
     def GetStatusChange(self, timeout, readerstates):
-        state = 0x10122
+        name, oldstate = readerstates[0][:2]
+        state = 0
         atr = []
         if self.token:
-            state |= scard.SCARD_STATE_PRESENT
-            atr = self.token.atr
+            state = scard.SCARD_STATE_PRESENT | scard.SCARD_STATE_INUSE
+            atr = self.token.ATR
         else:
-            state |= scard.SCARD_STATE_EMPTY
-        time.sleep(timeout/1000)
+            state = scard.SCARD_STATE_EMPTY
+        if state == (oldstate & 0xFFFF):
+            time.sleep(timeout/1000)
+        else:
+            state |= scard.SCARD_STATE_CHANGED
         return scard.SCARD_S_SUCCESS, [(self.name, state, atr)]
 
     def __str__(self):
