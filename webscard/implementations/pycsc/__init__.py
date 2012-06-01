@@ -40,7 +40,7 @@ class PyCSC(object):
         """ our only reader name """
         if hContext not in self.contexts:
             return scard.SCARD_E_INVALID_HANDLE, []
-        return 0, [self.reader.name]
+        return scard.SCARD_S_SUCCESS, [self.reader.name]
 
     def SCardConnect(self, hContext, zreader, dwShared, dwProtocol):
         """ check parameters and delegate to reader """
@@ -74,12 +74,12 @@ class PyCSC(object):
     def SCardGetStatusChange(self, hContext, dwTimeout, rgReaderStates):
         if hContext not in self.contexts:
             return scard.SCARD_E_INVALID_HANDLE
-        return 0
+        return self.reader.GetStatusChange(dwTimeout, rgReaderStates)
 
     def SCardCancel(self, hContext):
         if hContext not in self.contexts:
             return scard.SCARD_E_INVALID_HANDLE
-        return 0
+        return scard.SCARD_S_SUCCESS
 
     def SCardControl(self, hCard, dwControlCode, inBuffer):
         pass

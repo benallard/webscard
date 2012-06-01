@@ -1,4 +1,4 @@
-import random, threading
+import random, threading, time
 
 from smartcard import scard # for constants
 
@@ -85,6 +85,17 @@ class Reader(object):
             return scard.SCARD_E_INVALID_HANDLE, self.name, 0, 0, []
         # 0x10 is SCARD_POWERED
         return scard.SCARD_S_SUCCESS, self.name, 0x10, self.cards[card], self.token.ATR
+        
+    def GetStatusChange(self, timeout, readerstates):
+        state = 0x10122
+        atr = []
+        if self.token:
+            state |= scard.SCARD_STATE_PRESENT
+            atr = self.token.atr
+        else:
+            state |= scard.SCARD_STATE_EMPTY
+        time.sleep(timeout/1000)
+        return scard.SCARD_S_SUCCESS, [(self.name, state, atr)]
 
 class CardRLock(object):
     """ A kind of RLock, but based on hCard instead of thread """
