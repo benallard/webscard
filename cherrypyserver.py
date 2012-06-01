@@ -9,7 +9,7 @@ from webscard.utils import get_main_dir
 
 config = Config(os.path.join(get_main_dir(), 'webscard.cfg'))
 
-if config.getbool('logger.web', False):
+if config['logger'].get('web', False):
     app = TransLogger(WebSCard(config))
 else:
     app = WebSCard(config)
