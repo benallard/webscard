@@ -61,6 +61,7 @@ class WebSCard(object):
         response = None
         if self.config['internal'].get('sessioncheck', True):
             response = request.validatesession(**values)
+        request.populate(**values)
         if response is None:
             response = handler(request, **values)
 

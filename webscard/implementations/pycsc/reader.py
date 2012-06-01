@@ -1,4 +1,4 @@
-import random, threading, time
+import random, threading, textwrap, time
 
 from smartcard import scard # for constants
 
@@ -96,6 +96,11 @@ class Reader(object):
             state |= scard.SCARD_STATE_EMPTY
         time.sleep(timeout/1000)
         return scard.SCARD_S_SUCCESS, [(self.name, state, atr)]
+
+    def __str__(self):
+        return textwrap.dedent("'"+self.name + """'\
+         with one token inside:
+        """) + str(self.token)
 
 class CardRLock(object):
     """ A kind of RLock, but based on hCard instead of thread """
