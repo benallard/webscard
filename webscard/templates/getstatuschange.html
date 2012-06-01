@@ -1,0 +1,15 @@
+{%extends "operation.html" %}
+{%block title %}Status{% endblock %}
+{%block code %}
+<div class="code">
+  <pre>
+SCardGetStatusChange()
+  </pre>
+</div>
+{% endblock %}
+{% block output %}
+{{ rgReaderStates }}
+{% endblock %}
+{% block suggestions %}
+<li>Nothing</li>
+{% endblock %}
