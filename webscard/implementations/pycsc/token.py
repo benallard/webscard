@@ -185,13 +185,12 @@ class CAPToken(Token):
                 err, sw = self.transmit(map(lambda x: int(x, 16), data))
 
     def installJCFunctions(self):
-        """ This tweak the JC Framework to make it fit our environment """
+        """ This tweak the JC Framework to make it fit our environment 
+        We make a big usage of closures to pass the local `self` to the JC
+        functions
+        """
 
         def defineMyregister(self):
-            """
-            This uses a closure to pass the local `self` to the Applet
-            register function
-            """
             def myregister(applet, bArray = [], bOffset=0, bLength=0):
                 if bLength != 0:
                     aid = AID(bArray, bOffset, bLength)
@@ -201,23 +200,31 @@ class CAPToken(Token):
             return myregister
         Applet.register = defineMyregister(self)
 
-        def defineMylookupAID(applets):
+        def defineMygetAID(self):
+            def mygetAID():
+                return AID(self.current_applet_aid, 0, len(self.current_applet_aid))
+            return mygetAID
+        JCSystem.getAID = defineMygetAID(self)
+        Applet.getAID = JCSystem.getAID
+
+        def defineMylookupAID(self):
             def mylookupAID(buffer, offset, length):
-                if a2d(buffer[offset:offset + length]) in applets:
+                if a2d(buffer[offset:offset + length]) in self.applets:
                     return AID(buffer, offset, length)
                 return None
             return mylookupAID
-        JCSystem.lookupAID = defineMylookupAID(self.applets)
+        JCSystem.lookupAID = defineMylookupAID(self)
 
-        def defineMyisAppletActive(selected):
+        def defineMyisAppletActive(self):
             def myisAppletActive(aid):
-                return applets[a2d(aid.aid)] in selected
+                return self.applets[a2d(aid.aid)] in self.selected
             return myisAppletActive
-        JCSystem.isAppletActive = defineMyisAppletActive(self.selected)
+        JCSystem.isAppletActive = defineMyisAppletActive(self)
 
         def defineMygetAssignedChannel(self):
             def mygetAssignedChannel():
                 return self.current_channel
+            return mygetAssignedChannel
         JCSystem.getAssignedChannel = defineMygetAssignedChannel(self)
 
 
@@ -229,7 +236,7 @@ class CAPToken(Token):
 
     def transmit(self, bytes):
         bytes = map(s1, bytes)
-        self.vm.log = ""
+        self.vm.resetlog()
         self.current_channel = bytes[0] & 0x3
         if self.selected[self.current_channel]:
             self.selected[self.current_channel]._selectingApplet = False
@@ -238,7 +245,8 @@ class CAPToken(Token):
             if bytes[1:4] == [-92, 4, 0]:
                 aid = bytes[5:5 + bytes[4]]
                 # select command A4 04 00
-                self._cmselect(aid)
+                if not self._cmselect(aid):
+                    return 0, d2a('\x69\x99')
             elif bytes[1:4] == [112, 0, 0]:
                 # open channel : 70 00 00
                 for idx in xrange(4):
@@ -247,24 +255,24 @@ class CAPToken(Token):
                         buf = [idx]
                         buf.extend(d2a('\x90\x00'))
                         return 0, buf
-                return 0, swtotransmitres(ISO7816.SW_WRONG_P1P2)
+                return swtotransmitres(ISO7816.SW_WRONG_P1P2)
             elif bytes[1:3] == [112, -128]:
                 # close channel: 70 80
-                if self.channels[self.current_channel]:
-                    self.channels[self.current_channel] = False
-                    buf = d2a('\x90\x00')
-                    return 0, buf
+                idx = bytes[3]
+                if self.channels[idx]:
+                    self.channels[idx] = False
+                    return swtotransmitres(ISO7816.SW_NO_ERROR)
                 return swtotransmitres(ISO7816.SW_WRONG_P1P2)
             elif bytes[1:4] == [-26, 12, 0]:
                 # install : E6 0C 00
                 return self.install(bytes, 5)
 
-        # Make an APDU object
-        apdu = APDU(bytes)
-        # pass to the process method
         applet = self.selected[self.current_channel]
         if applet is None:
             return swtotransmitres(ISO7816.SW_FILE_NOT_FOUND)
+        # Make an APDU object
+        apdu = APDU(bytes)
+        # pass to the process method
         self.vm.frame.push(applet)
         self.vm.frame.push(apdu)
         # invoke the process method
@@ -275,10 +283,8 @@ class CAPToken(Token):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
-            pass
+            while self.vm.step():
+                pass
         except ISOException, isoe:
             return swtotransmitres(isoe.getReason())
         except Exception, e:
@@ -287,6 +293,26 @@ class CAPToken(Token):
         buf.extend(d2a('\x90\x00'))
         return 0, buf
 
+    def _cmdeselect(self, channel):
+        applet = self.selected[channel]
+        self.vm.frame.push(applet)
+        try:
+            deselectmtd = JavaCardVirtualMethod(
+                applet._ref.offset,
+                4,
+                False,
+                self.vm.cap_file,
+                self.vm.resolver)
+        except NoSuchMethod:
+            self.selected[channel] = None
+            return True
+        self.vm._invokevirtualjava(deselectmtd)
+        while self.vm.step():
+            pass
+        if self.vm.frame.getValue():
+            self.selected[channel] = None
+            return True
+        return False
 
     def _cmselect(self, aid):
         channel = self.current_channel
@@ -303,19 +329,22 @@ class CAPToken(Token):
             potential = self.applets[a2d(aid)]
         except KeyError:
             return False
+
         self.vm.frame.push(potential)
 
         try:
-            selectmtd = JavaCardVirtualMethod(potential._ref.offset, 6, False, self.vm.cap_file, self.vm.resolver)
+            selectmtd = JavaCardVirtualMethod(
+                potential._ref.offset,
+                6,
+                False,
+                self.vm.cap_file,
+                self.vm.resolver)
         except NoSuchMethod:
             self.selected[channel] = potential
             self.selected[channel]._selectingApplet = True
             return True
         self.vm._invokevirtualjava(selectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
+        while self.vm.step():
             pass
         if self.vm.frame.getValue() == True:
             self.selected[channel] = potential
@@ -323,25 +352,6 @@ class CAPToken(Token):
             return True
         else:
             return False
-
-    def _cmdeselect(self, channel):
-        applet = self.selected[channel]
-        self.vm.frame.push(applet)
-        try:
-            deselectmtf = JavaCardVirtualMethod(applet._ref.offset, 4, False, self.vm.cap_file, self.vm.resolver)
-        except NoSuchMethod:
-            self.selected[channel] = None
-            return True
-        self.vm._invokevirtualjava(deselectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
-            pass
-        if self.vm.frame.getValue():
-            self.selected[channel] = None
-            return True
-        return False
 
 
     def install(self, data, offset):
@@ -365,7 +375,7 @@ class CAPToken(Token):
         for apl in self.vm.cap_file.Applet.applets:
             if a2d(aid) == a2d(apl.aid):
                 applet = apl
-            break
+                break
         if applet is None:
             return swtotransmitres(ISO7816.SW_FILE_NOT_FOUND)
         self.current_install_aid = AID(aid, 0, len(aid))
@@ -374,12 +384,10 @@ class CAPToken(Token):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
+            while self.vm.step():
+                pass
         except ISOException, ie:
             return swtotransmitres(ie.getReason())
-        except ExecutionDone:
-            pass
         self.current_install_aid = None
         return swtotransmitres(ISO7816.SW_NO_ERROR)
 
