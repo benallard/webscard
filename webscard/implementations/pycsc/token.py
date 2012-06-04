@@ -7,7 +7,7 @@ from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, 
 
 try:
     from caprunner import resolver, capfile
-    from caprunner.utils import d2a, a2d
+    from caprunner.utils import d2a, a2d, a2s, signed1 as s1
     from caprunner.interpreter import JavaCardVM, ExecutionDone
     from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
     CAPRunner = True
@@ -179,9 +179,10 @@ class CAPToken(Token):
         # Load the CAP File
         self.vm.load(capfile.CAPFile(self.capfilename))
         
-        if 'install' in config:
-            data = config['install'].split()
-            self.install(map(lambda x: int(x, 16), data), 0)
+        if 'init' in config:
+            for apdu in config['init']:
+                data = apdu.split()
+                err, sw = self.transmit(map(lambda x: int(x, 16), data))
 
     def installJCFunctions(self):
         """ This tweak the JC Framework to make it fit our environment """
@@ -227,6 +228,7 @@ class CAPToken(Token):
                 apl._cmdeselect(i)
 
     def transmit(self, bytes):
+        bytes = map(s1, bytes)
         self.vm.log = ""
         self.current_channel = bytes[0] & 0x3
         if self.selected[self.current_channel]:
@@ -255,7 +257,7 @@ class CAPToken(Token):
                 return swtotransmitres(ISO7816.SW_WRONG_P1P2)
             elif bytes[1:4] == [-26, 12, 0]:
                 # install : E6 0C 00
-                self.install(bytes, 5)
+                return self.install(bytes, 5)
 
         # Make an APDU object
         apdu = APDU(bytes)
@@ -288,20 +290,26 @@ class CAPToken(Token):
 
     def _cmselect(self, aid):
         channel = self.current_channel
-        # We should spend some time looking for an applet there ...
-        potential = self.applets[a2d(aid)]
+        
         applet = self.selected[channel]
         if applet is not None:
             if not self._cmdeselect(channel):
                 return False
             self.selected[channel] = None
 
+        # We should spend some time looking for an applet there ...
+        potential = None
+        try:
+            potential = self.applets[a2d(aid)]
+        except KeyError:
+            return False
         self.vm.frame.push(potential)
+
         try:
             selectmtd = JavaCardVirtualMethod(potential._ref.offset, 6, False, self.vm.cap_file, self.vm.resolver)
         except NoSuchMethod:
-            selected[channel] = potential
-            selected[channel]._selectingApplet = True
+            self.selected[channel] = potential
+            self.selected[channel]._selectingApplet = True
             return True
         self.vm._invokevirtualjava(selectmtd)
         try:
@@ -359,8 +367,8 @@ class CAPToken(Token):
                 applet = apl
             break
         if applet is None:
-            return
-        self.current_install_aid = aid
+            return swtotransmitres(ISO7816.SW_FILE_NOT_FOUND)
+        self.current_install_aid = AID(aid, 0, len(aid))
         self.vm._invokestaticjava(JavaCardStaticMethod(
                 applet.install_method_offset,
                 self.vm.cap_file,
