@@ -175,8 +175,12 @@ class CAPToken(Token):
         self.installJCFunctions()
 
         self.capfilename = config["CAPFile"]
+        
+        jcversion = config.get("JCVersion", "3.0.1")
+        jcversion = tuple([int(i) for i in jcversion.split('.')])
+        
         # Create the VM
-        self.vm = JavaCardVM(resolver.linkResolver())
+        self.vm = JavaCardVM(resolver.linkResolver(jcversion))
         # Load the CAP File
         self.vm.load(capfile.CAPFile(self.capfilename))
         
