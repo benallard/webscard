@@ -8,7 +8,7 @@ from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, 
 try:
     from caprunner import resolver, capfile
     from caprunner.utils import d2a, a2d, a2s, signed1 as s1
-    from caprunner.interpreter import JavaCardVM, ExecutionDone
+    from caprunner.interpreter import JavaCardVM
     from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
     CAPRunner = True
 except ImportError:
