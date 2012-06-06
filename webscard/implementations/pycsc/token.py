@@ -24,8 +24,8 @@ except ImportError:
 from webscard.utils import loadpath
 
 def swtotransmitres(sw):
-    sw1 = (sw >> 8) & 0xff
-    sw2 = sw & 0xff
+    sw1 = s1((sw >> 8) & 0xff)
+    sw2 = s1(sw & 0xff)
     return 0, [sw1, sw2]
 
 class Token(object):
