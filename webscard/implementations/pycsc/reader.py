@@ -101,6 +101,11 @@ class Reader(object):
             state |= scard.SCARD_STATE_CHANGED
         return scard.SCARD_S_SUCCESS, [(self.name, state, atr)]
 
+    def Control(self, card, controlCode, buffer):
+        if card not in self.cards:
+            return scard.SCARD_E_INVALID_HANDLE, []
+        return scard.SCARD_E_UNSUPPORTED_FEATURE, []
+        
     def __str__(self):
         return textwrap.dedent("'"+self.name + """'\
          with one token inside:

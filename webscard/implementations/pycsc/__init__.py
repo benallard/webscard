@@ -82,7 +82,7 @@ class PyCSC(object):
         return scard.SCARD_S_SUCCESS
 
     def SCardControl(self, hCard, dwControlCode, inBuffer):
-        pass
+        return self.reader.Control(hCard, dwControlCode, inBuffer)
 
     def __str__(self):
         return textwrap.dedent("""\
