@@ -48,6 +48,7 @@ class Token(object):
         if 'CAPFile' in config:
             if not CAPRunner:
                 # There should be a better way to ... 
+                print "CAPFile, but no caprunner"
                 return None
             return CAPToken(name, config)
         elif 'applets' in config:
@@ -180,9 +181,12 @@ class CAPToken(Token):
         self.vm.load(capfile.CAPFile(self.capfilename))
         
         if 'init' in config:
+            print "initializing token"
             for apdu in config['init']:
                 data = apdu.split()
                 err, sw = self.transmit(map(lambda x: int(x, 16), data))
+                if err: print "Err", err
+                print a2s(sw)
 
     def installJCFunctions(self):
         """ This tweak the JC Framework to make it fit our environment 
